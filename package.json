@@ -3,16 +3,16 @@
   "version": "0.0.1",
   "description": "http connection pool",
   "main": "./dist/index.js",
-  "types" : "./dist/index.d.ts",
+  "types": "./dist/index.d.ts",
   "directories": {
-    "src" : "source",
-    "dist" : "build",    
+    "src": "source",
+    "dist": "build",
     "test": "test"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
-  },  
-  "keywords" : [
+  },
+  "keywords": [
     "http",
     "https",
     "connection",
@@ -20,31 +20,30 @@
     "connection-pool",
     "http-connection-pool"
   ],
-  "repository" : {
-    "type" : "git",
-    "url" : "https://github.com/jhkim31/http-connection-pool"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jhkim31/http-connection-pool"
   },
   "author": {
-    "name" : "jhkim31",
-    "url" : "https://github.com/jhkim31",
-    "email" : "biz.jh.kim@gmail.com"
+    "name": "jhkim31",
+    "url": "https://github.com/jhkim31",
+    "email": "biz.jh.kim@gmail.com"
   },
-  "bugs" : {
-    "url" : "https://github.com/jhkim31/http-connection-pool/issues",
-    "email" : "biz.jh.kim@gmail.com"
+  "bugs": {
+    "url": "https://github.com/jhkim31/http-connection-pool/issues",
+    "email": "biz.jh.kim@gmail.com"
   },
-  "homepage" : "https://github.com/jhkim31/http-connection-pool",
+  "homepage": "https://github.com/jhkim31/http-connection-pool",
   "license": "MIT",
   "dependencies": {
-    "@types/axios": "^0.14.0",
-    "@types/superagent": "^8.1.0",
     "dotenv": "^16.3.1",
     "esbuild": "^0.19.10",
-    "superagent": "^8.1.2",
-    "typescript": "^5.3.3"
+    "ts-node": "^10.9.2"
   },
   "devDependencies": {
-    "@tsconfig/node14": "^14.1.0",
-    "@types/node": "^20.10.5"
+    "@types/jest": "^29.5.11",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.3.3"
   }
 }
