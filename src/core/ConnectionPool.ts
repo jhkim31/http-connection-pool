@@ -1,54 +1,60 @@
 import { EventEmitter } from "events";
-import { get, Response, agent } from "superagent";
-import * as https from "https";
+import { RequestOptions, Response } from "../interfaces";
+import request from "./request";
 
 type Resolve = (d: Response) => void;
 type Reject = (e: unknown) => void;
 
 interface QueueItem {
-    url: string;    
-    method: string;
-    resolve: Resolve;
-    reject: Reject;
+  url: string;
+  method: string;
+  resolve: Resolve;
+  reject: Reject;
 }
 
 class ConnectionPool {
-    queue: QueueItem[];
-    maxSize: number;
-    currentSize: number;
-    events: EventEmitter;
+  queue: QueueItem[];
+  maxWorkers: number;
+  currentWorkers: number;
+  events: EventEmitter;
 
-    constructor(size = 4) {
-        const agent = new https.Agent({keepAlive: true});
-        this.maxSize = size;
-        this.queue = [];
-        this.events = new EventEmitter();
-        this.currentSize = 0;        
-        this.events.on('next', () => {
-            if (this.currentSize < this.maxSize) {
-                if (this.queue.length > 0) {
-                    const item = this.queue[0];
-                    this.queue = this.queue.slice(1);
-                    this.currentSize++;                    
-                    get(item.url)                        
-                        .agent(agent)
-                        .then(item.resolve)
-                        .catch(item.reject)
-                        .finally(() => {
-                            this.currentSize--;
-                            this.events.emit('next');
-                        })
-                    this.events.emit('next');
-                }
+  constructor(workers = 4) {
+    this.maxWorkers = workers;
+    this.queue = [];
+    this.events = new EventEmitter();
+    this.currentWorkers = 0;
 
+    this.events.on('next', () => {
+      try {
+        if (this.currentWorkers < this.maxWorkers) {
+          const item = this.queue.shift();
+          if (item !== undefined) {
+            this.currentWorkers++;
+            const requestOptions: RequestOptions = {
+              url: item.url,
+              method: item.method              
             }
-        })
-    }
+            request(requestOptions)
+              .then(item.resolve)
+              .catch(item.reject)
+              .finally(() => {
+                this.currentWorkers--;
+                this.events.emit('next');
+              })
+            this.events.emit('next');
+          }
+        }
+      } catch (error: unknown) {
+        console.log('e');
+      }
+    })
 
-    add(item: QueueItem) {
-        this.queue.push(item);
-        this.events.emit('next');
-    }
+  }
+
+  add(item: QueueItem) {
+    this.queue.push(item);
+    this.events.emit('next');
+  }
 }
 
 export default ConnectionPool;
