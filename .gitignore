@@ -2,3 +2,5 @@
 **/node_modules
 **/dist
 **/tempCodeRunnerFile.ts
+**/coverage
+**/html-report
