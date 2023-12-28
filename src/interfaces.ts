@@ -15,6 +15,7 @@ interface RequestOptions {
 }
 
 interface Response {
+  status?: number;
   headers: http.IncomingHttpHeaders;
   body: string;
 }

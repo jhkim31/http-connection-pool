@@ -1,5 +1,6 @@
 import http from 'node:http';
 import https from 'https';
+import isJson from '../lib/isJson';
 
 import { RequestOptions, Response } from '../interfaces';
 
@@ -20,30 +21,31 @@ export default async function request(requestOptions: RequestOptions) {
       headers
     }, (res) => {
       let body = '';
-            
+
       res.on('data', (chunk) => {
         body += chunk;
       });
 
       res.on('end', () => {
         resolve({
+          status: res.statusCode,
           headers: res.headers,
           body: body
         })
       });
 
-      res.on('error', (error) => {
-        reject(error);
+      res.on('error', (e) => {
+        reject(e);
       })
     })
 
     if (requestOptions.body) {
-      try {
-        req.write(JSON.stringify(requestOptions.body));
-      } catch (e) {
+      if (typeof requestOptions.body == "string") {
         req.write(requestOptions.body);
-      }      
+      } else {
+        req.write(JSON.stringify(requestOptions.body));
+      }
     }
     req.end();
-  })  
+  })
 }
