@@ -1,4 +1,4 @@
-import request from "../../src/core/request";
+import request from "../src/core/request";
 
 
 describe("default test", () => {

@@ -1,6 +1,5 @@
 import http from 'node:http';
 import https from 'https';
-import isJson from '../lib/isJson';
 
 import { RequestOptions, Response } from '../interfaces';
 

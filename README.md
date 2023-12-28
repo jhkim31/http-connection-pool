@@ -1,3 +1,17 @@
-# Connection Pool
-* Connection Pool 개발 실험입니다.
-* 최대 5개의 커넥션을 유지할때 Connection Pool을 유지하는것과, 배치처리 하는것의 차이를 확인.
+# http-connection-pool
+**http-connection-pool** can be useful when need to send multiple requests if there is a limit to simultaneous connections.
+
+## Usage
+### typescript
+```typescript
+import ConnectionPool from "http-connection-pool";
+
+const connectionPool = new ConnectionPool(1_000);
+for (let i = 0; i <= 100_000; i++) {
+  connectionPool.add({
+    url: "http://localhost:3000",
+    method: "get"
+  })
+}
+```
+

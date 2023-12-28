@@ -1,5 +1,6 @@
 import ConnectionPool from "./core/connectionPool";
 
-export * from "./interfaces";
 export default ConnectionPool;
+export type * from "./types";
+export * from "./interfaces";
 export * from "./core/connectionPool";

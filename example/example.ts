@@ -1,33 +1,9 @@
-import ConnectionPool, { QueueItem } from "../src";
+import ConnectionPool from "..";
 
-const c = new ConnectionPool(2);
-c.add({
-  url: "http://httpbin.org/post",
-  "method": 'post',
-  "reject": (e) => {
-    console.log('e');
-  },
-  "resolve": (d) => {
-    console.log(d);
-  }
-});
-c.add({
-  url: "http://httpbin.org/get",
-  "method": 'get',
-  "reject": (e) => {
-    console.log('e');
-  },
-  "resolve": (d) => {
-    console.log(d);
-  }
-});
-c.add({
-  url: "http://httpbin.org/delete",
-  "method": 'delete',
-  "reject": (e) => {
-    console.log('e');
-  },
-  "resolve": (d) => {
-    console.log(d);
-  }
-});
+const connectionPool = new ConnectionPool(10);
+for (let i = 0; i <= 100; i++) {
+  connectionPool.add({
+    url: "http://localhost:3000",
+    method: "get"
+  })
+}
