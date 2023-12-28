@@ -1,22 +1,20 @@
 import { EventEmitter } from "events";
-import { RequestOptions, Response } from "../interfaces";
+import type { RejectHandler, ResolveHandler } from "../types";
+import { RequestOptions } from "../interfaces";
 import request from "./request";
-
-type Resolve = (d: Response) => void;
-type Reject = (e: unknown) => void;
 
 interface QueueItem {
   url: string;
   method: string;
-  resolve: Resolve;
-  reject: Reject;
+  resolve?: ResolveHandler;
+  reject?: RejectHandler;
 }
 
 class ConnectionPool {
   queue: QueueItem[];
   maxWorkers: number;
   currentWorkers: number;
-  events: EventEmitter;
+  events: EventEmitter;  
 
   constructor(workers = 4) {
     this.maxWorkers = workers;
@@ -48,14 +46,13 @@ class ConnectionPool {
         console.log('e');
       }
     })
+  }  
 
-  }
-
-  add(item: QueueItem) {
+  add(item: QueueItem) {    
     this.queue.push(item);
     this.events.emit('next');
   }
 }
 
 export default ConnectionPool;
-export { Resolve, Reject, QueueItem };
+export { QueueItem };

@@ -1,4 +1,4 @@
-import isJson from "../../src/lib/isJson";
+import isJson from "../src/lib/isJson";
 
 
 describe("json validate test", () => {
