@@ -1,14 +1,6 @@
 import { EventEmitter } from "events";
-import type { RejectHandler, ResolveHandler } from "../types";
-import { RequestOptions } from "../interfaces";
+import type { RequestOptions, QueueItem } from "../types";
 import request from "./request";
-
-interface QueueItem {
-  url: string;
-  method: string;
-  resolve?: ResolveHandler;
-  reject?: RejectHandler;
-}
 
 class ConnectionPool {
   queue: QueueItem[];
@@ -54,5 +46,4 @@ class ConnectionPool {
   }
 }
 
-export default ConnectionPool;
-export { QueueItem };
+export {ConnectionPool};

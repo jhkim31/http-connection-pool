@@ -1,7 +1,7 @@
 import http from 'node:http';
-import https from 'https';
+import https from 'node:https';
 
-import { RequestOptions, Response } from '../interfaces';
+import { RequestOptions, Response } from '../types';
 
 export default async function request(requestOptions: RequestOptions) {
   const url = new URL(requestOptions.url);
