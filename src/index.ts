@@ -1,4 +1,4 @@
-import {ConnectionPool} from "./core/connectionPool";
+import ConnectionPool from "./core/connectionPool";
 
 export default ConnectionPool;
 export type * from "./types";
