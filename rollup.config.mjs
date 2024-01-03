@@ -5,11 +5,11 @@ import { dts } from "rollup-plugin-dts";
 export default [
   {
     input: 'src/index.ts',
-    output: {      
+    output: {
       file: "dist/index.js",
-      format: 'cjs',      
+      format: 'cjs',
     },
-    plugins: [resolve(), typescript({ tsconfig: "./bundleHelper/tsconfig.cjs.json"})]
+    plugins: [resolve(), typescript({ tsconfig: "./bundleHelper/tsconfig.cjs.json" })]
   },
   {
     input: 'src/index.ts',
@@ -17,7 +17,7 @@ export default [
       file: 'dist/index.mjs',
       format: 'esm'
     },
-    plugins: [resolve(), typescript({ tsconfig: "./bundleHelper/tsconfig.esm.json"})]
+    plugins: [resolve(), typescript({ tsconfig: "./bundleHelper/tsconfig.esm.json" })]
   },
   {
     input: 'src/index.ts',
@@ -25,11 +25,20 @@ export default [
       dir: 'dist/types',
       format: 'esm'
     },
-    plugins: [resolve(), typescript({ tsconfig: "./bundleHelper/tsconfig.types.json"})]
+    plugins: [resolve(), typescript({ tsconfig: "./bundleHelper/tsconfig.types.json" })]
   },
   {
     input: "./dist/types/index.d.ts",
-    output: [{ file: "dist/index.d.ts", format: "es" }],    
+    output: [
+      {
+        file: "dist/index.d.ts",
+        format: "esm"
+      },
+      {
+        file: "dist/index.d.mts",
+        format: "esm"
+      }
+    ],
     plugins: [resolve(), dts()],
   }
 ]

@@ -2,7 +2,7 @@ import { EventEmitter } from "node:events";
 import type { RequestOptions, QueueItem } from "../types";
 import request from "./request";
 
-export default class ConnectionPool {
+class ConnectionPool {
   queue: QueueItem[];
   maxWorkers: number;
   currentWorkers: number;
