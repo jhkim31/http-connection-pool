@@ -3,6 +3,7 @@
   "version": "0.0.5",
   "description": "http connection pool",
   "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "directories": {
     "src": "source",
@@ -10,7 +11,18 @@
     "test": "test"
   },
   "scripts": {
-    "test": "npx jest"
+    "test": "npx jest",
+    "bundle": "npx rollup -c && rm -rf dist/types"
+  },
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs",
+      "types": {
+        "require" : "./dist/index.d.ts",
+        "import" : "./dist/index.d.mts"
+      }
+    }
   },
   "keywords": [
     "http",
@@ -36,10 +48,17 @@
   "homepage": "https://github.com/jhkim31/http-connection-pool",
   "license": "MIT",
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-typescript": "^11.1.6",
     "@types/jest": "^29.5.11",
+    "@types/node": "^20.11.5",
     "jest": "^29.7.0",
     "jest-html-reporters": "^3.1.7",
+    "rollup": "^4.9.6",
+    "rollup-plugin-dts": "^6.1.0",
     "ts-jest": "^29.1.1",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "tslib": "^2.6.2"
   }
 }
