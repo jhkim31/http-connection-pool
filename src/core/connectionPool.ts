@@ -1,6 +1,8 @@
-import { EventEmitter } from "node:events";
+import { EventEmitter } from 'node:events';
+
+import request from './request';
+
 import type { RequestOptions, QueueItem } from "../types";
-import request from "./request";
 
 class ConnectionPool {
   queue: QueueItem[];

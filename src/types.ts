@@ -1,10 +1,24 @@
 import * as http from 'node:http';
 
-interface RequestOptions {
-  url: string;
-  method: string;
+export type Headers = { [key: string]: string };
+export type RequestBody = string | object;
 
-  headers?: { [key: string]: string };
+
+export type BeforeRetryHook = (retryCount: number) => void;
+export type AfterRetryHook = (error: Error, retryCount: number) => void;
+
+export interface Hooks {
+  beforeRetryHook?: BeforeRetryHook;
+  afterRetryHooks?: AfterRetryHook;
+}
+
+export interface RequestOptions {
+  url: string;
+  method?: string;
+
+  retry?: number;
+
+  headers?: Headers;
 
   // protocol?: string;
   // host?: string;
@@ -12,22 +26,41 @@ interface RequestOptions {
   // path?: string;
 
   body?: string | object;
+
+  hooks?: Hooks;
 }
 
-interface Response {
+
+export interface Response {
   status?: number;
   headers: http.IncomingHttpHeaders;
   body: string;
 }
 
-interface QueueItem {
+export interface QueueItem {
   url: string;
   method: string;
   resolve?: ResolveHandler;
   reject?: RejectHandler;
 }
+/**
+ * * GET
+ * * POST
+ * * PATCH
+ * * PUT
+ * * DELETE
+ * * OPTIONS
+ * * HEAD
+ */
+export enum Method {
+  GET,
+  POST,
+  PATCH,
+  PUT,
+  DELETE,
+  OPTIONS,
+  HEAD
+}
 
-type ResolveHandler = (d: Response) => void;
-type RejectHandler = (e: unknown) => void;
-
-export type { ResolveHandler, RejectHandler, Response, RequestOptions, QueueItem };
+export type ResolveHandler = (d: Response) => void;
+export type RejectHandler = (e: unknown) => void;
