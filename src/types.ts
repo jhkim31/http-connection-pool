@@ -5,11 +5,13 @@ export type RequestBody = string | object;
 
 
 export type BeforeRetryHook = (retryCount: number) => void;
-export type AfterRetryHook = (error: Error, retryCount: number) => void;
+export type RetryErrorHandler = (error: unknown) => void;
+export type AfterRetryHook = (retryCount: number) => void;
 
 export interface Hooks {
   beforeRetryHook?: BeforeRetryHook;
-  afterRetryHooks?: AfterRetryHook;
+  retryErrorHandler?: RetryErrorHandler;
+  afterRetryHook?: AfterRetryHook;
 }
 
 export interface RequestOptions {

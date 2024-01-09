@@ -2,7 +2,7 @@ import http from 'node:http';
 import https from 'node:https';
 
 import { Method, Headers, RequestOptions, Response, RequestBody, Hooks } from '../types';
-import { RetryError } from './error';
+import { RetryError } from '../lib/error';
 
 export default class Request {
   maxRetryCount: number;
@@ -39,26 +39,27 @@ export default class Request {
           }
           const res = await this.dispatch();
           resolve(res);
+          console.log(retryCount);
           break;
-        } catch (error: unknown) {
-          if (error instanceof Error) {
-            if (this.hooks?.afterRetryHooks) {
-              this.hooks.afterRetryHooks(error, retryCount);
-            }
-          } else {
-
-          }
           
+        } catch (error: unknown) {
+          if (this.hooks?.retryErrorHandler) {
+            this.hooks.retryErrorHandler(error);
+          }           
+        } finally {
+          if (retryCount >= 1 && this.hooks?.afterRetryHook) {            
+            this.hooks.afterRetryHook(retryCount);                        
+          }          
         }
       }
-      throw new RetryError(`The number of retries has been exceeded. (${this.maxRetryCount})`);
+      reject(new RetryError(`The number of retries has been exceeded. (${this.maxRetryCount})`));
     })
   }
 
   dispatch(): Promise<Response> {
     return new Promise<Response>((resolve, reject) => {
       const req = this.transport.request(this.url, {
-        method: this.method,
+        method: this.method ?? "get",
         agent: this.agent,
         headers: this.headers
       }, (res) => {
@@ -85,7 +86,7 @@ export default class Request {
         }
       }
 
-      req.on('error', (e) => {
+      req.on('error', (e) => {        
         reject('e');
       })
 
