@@ -2,7 +2,7 @@ import { EventEmitter } from 'node:events';
 
 import request from './request';
 
-import type { RequestOptions, QueueItem } from "../types";
+import type { HcpRequestOptions, QueueItem } from "../types";
 
 class ConnectionPool {
   queue: QueueItem[];
@@ -22,7 +22,7 @@ class ConnectionPool {
           const item = this.queue.shift();
           if (item !== undefined) {
             this.currentWorkers++;
-            const requestOptions: RequestOptions = {
+            const requestOptions: HcpRequestOptions = {
               url: item.url,
               method: item.method              
             }

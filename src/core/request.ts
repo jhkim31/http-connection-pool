@@ -1,11 +1,13 @@
 import http from 'node:http';
 import https from 'node:https';
 
-import { Method, Headers, RequestOptions, Response, RequestBody, Hooks } from '../types';
 import { RetryError } from '../lib/error';
+import { AfterRetryHook, BeforeRetryHook, HcpRequestHeaders, HcpRequestBody, HcpRequestOptions, HcpResponse, RetryErrorHandler } from '../types';
+import sleep from '../utils/sleep';
 
 export default class Request {
   maxRetryCount: number;
+  retryDelay: number;
   url: URL;
 
   isHttps: boolean;
@@ -13,12 +15,28 @@ export default class Request {
   agent: https.Agent | http.Agent;
 
   method?: string;
-  headers?: Headers;
-  body?: RequestBody;
-  hooks?: Hooks;
+  headers?: HcpRequestHeaders;
+  body?: HcpRequestBody;
 
-  constructor(requestOptions: RequestOptions) {
-    this.maxRetryCount = requestOptions.retry ?? 0;
+  beforeRetryHook?: BeforeRetryHook;
+  retryErrorHandler?: RetryErrorHandler;
+  afterRetryHook?: AfterRetryHook;
+
+  constructor(requestOptions: HcpRequestOptions) {
+    if (typeof requestOptions.retry === "undefined") {
+      this.maxRetryCount = 0;
+      this.retryDelay = 0;
+    } else if (typeof requestOptions.retry === "number") {
+      this.maxRetryCount = requestOptions.retry;
+      this.retryDelay = 0;
+    } else {
+      this.maxRetryCount = requestOptions.retry.maxRetryCount;
+      this.retryDelay = requestOptions.retry.retryDelay ?? 0;
+      this.beforeRetryHook = requestOptions.retry.hooks?.beforeRetryHook;
+      this.afterRetryHook = requestOptions.retry.hooks?.afterRetryHook;
+      this.retryErrorHandler = requestOptions.retry.hooks?.retryErrorHandler;
+    }
+
     this.url = new URL(requestOptions.url);
     this.method = requestOptions.method;
     this.headers = requestOptions.headers;
@@ -26,38 +44,39 @@ export default class Request {
     this.transport = this.isHttps ? https : http;
     this.agent = new this.transport.Agent({ keepAlive: true });
     this.body = requestOptions.body;
-    this.hooks = requestOptions.hooks;
   }
 
-  call() {
+  call(): Promise<HcpResponse> {
     return new Promise(async (resolve, reject) => {
-      let retryCount;
+      let retryCount;      
       for (retryCount = 0; retryCount <= this.maxRetryCount; retryCount++) {
         try {
-          if (retryCount >= 1 && this.hooks?.beforeRetryHook) {            
-            this.hooks.beforeRetryHook(retryCount);            
+          if (retryCount >= 1) {
+            if (this.beforeRetryHook) {
+              this.beforeRetryHook(retryCount);
+            }
+            await sleep(this.retryDelay);
           }
+
           const res = await this.dispatch();
           resolve(res);
-          console.log(retryCount);
           break;
-          
         } catch (error: unknown) {
-          if (this.hooks?.retryErrorHandler) {
-            this.hooks.retryErrorHandler(error);
-          }           
+          if (this.retryErrorHandler) {
+            this.retryErrorHandler(error);
+          }
         } finally {
-          if (retryCount >= 1 && this.hooks?.afterRetryHook) {            
-            this.hooks.afterRetryHook(retryCount);                        
-          }          
+          if (retryCount >= 1 && this.afterRetryHook) {
+            this.afterRetryHook(retryCount);
+          }
         }
       }
       reject(new RetryError(`The number of retries has been exceeded. (${this.maxRetryCount})`));
     })
   }
 
-  dispatch(): Promise<Response> {
-    return new Promise<Response>((resolve, reject) => {
+  dispatch(): Promise<HcpResponse> {
+    return new Promise<HcpResponse>((resolve, reject) => {      
       const req = this.transport.request(this.url, {
         method: this.method ?? "get",
         agent: this.agent,
@@ -73,7 +92,7 @@ export default class Request {
           resolve({
             status: res.statusCode,
             headers: res.headers,
-            body: body
+            body: JSON.parse(body)
           })
         });
       })
@@ -86,7 +105,7 @@ export default class Request {
         }
       }
 
-      req.on('error', (e) => {        
+      req.on('error', (e) => {
         reject('e');
       })
 

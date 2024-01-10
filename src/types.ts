@@ -1,39 +1,40 @@
 import * as http from 'node:http';
 
-export type Headers = { [key: string]: string };
-export type RequestBody = string | object;
-
+export type HcpRequestHeaders = { [key: string]: string };
+export type HcpRequestBody = string | object;
 
 export type BeforeRetryHook = (retryCount: number) => void;
 export type RetryErrorHandler = (error: unknown) => void;
 export type AfterRetryHook = (retryCount: number) => void;
 
-export interface Hooks {
-  beforeRetryHook?: BeforeRetryHook;
-  retryErrorHandler?: RetryErrorHandler;
-  afterRetryHook?: AfterRetryHook;
+export interface Retry {
+  maxRetryCount: number;
+  retryDelay?: number;
+  hooks?: {
+    beforeRetryHook?: BeforeRetryHook;
+    retryErrorHandler?: RetryErrorHandler;
+    afterRetryHook?: AfterRetryHook;
+  }
 }
 
-export interface RequestOptions {
+export interface HcpRequestOptions {
   url: string;
   method?: string;
 
-  retry?: number;
+  retry?: number | Retry;
 
-  headers?: Headers;
+  headers?: HcpRequestHeaders;
 
   // protocol?: string;
   // host?: string;
   // port?: number | string;  
   // path?: string;
 
-  body?: string | object;
-
-  hooks?: Hooks;
+  body?: HcpRequestBody;
 }
 
 
-export interface Response {
+export interface HcpResponse {
   status?: number;
   headers: http.IncomingHttpHeaders;
   body: string;
@@ -64,5 +65,5 @@ export enum Method {
   HEAD
 }
 
-export type ResolveHandler = (d: Response) => void;
+export type ResolveHandler = (d: HcpResponse) => void;
 export type RejectHandler = (e: unknown) => void;
