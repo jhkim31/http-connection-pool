@@ -1,33 +1,69 @@
 import * as http from 'node:http';
 
-interface RequestOptions {
-  url: string;
-  method: string;
+export type HcpRequestHeaders = { [key: string]: string };
+export type HcpRequestBody = string | object;
 
-  headers?: { [key: string]: string };
+export type BeforeRetryHook = (retryCount: number) => void;
+export type RetryErrorHandler = (error: unknown) => void;
+export type AfterRetryHook = (retryCount: number) => void;
+
+export interface Retry {
+  maxRetryCount: number;
+  retryDelay?: number;
+  hooks?: {
+    beforeRetryHook?: BeforeRetryHook;
+    retryErrorHandler?: RetryErrorHandler;
+    afterRetryHook?: AfterRetryHook;
+  }
+}
+
+export interface HcpRequestOptions {
+  url: string;
+  method?: string;
+
+  retry?: number | Retry;
+
+  headers?: HcpRequestHeaders;
 
   // protocol?: string;
   // host?: string;
   // port?: number | string;  
   // path?: string;
 
-  body?: string | object;
+  body?: HcpRequestBody;
 }
 
-interface Response {
+
+export interface HcpResponse {
   status?: number;
   headers: http.IncomingHttpHeaders;
   body: string;
 }
 
-interface QueueItem {
+export interface QueueItem {
   url: string;
   method: string;
   resolve?: ResolveHandler;
   reject?: RejectHandler;
 }
+/**
+ * * GET
+ * * POST
+ * * PATCH
+ * * PUT
+ * * DELETE
+ * * OPTIONS
+ * * HEAD
+ */
+export enum Method {
+  GET,
+  POST,
+  PATCH,
+  PUT,
+  DELETE,
+  OPTIONS,
+  HEAD
+}
 
-type ResolveHandler = (d: Response) => void;
-type RejectHandler = (e: unknown) => void;
-
-export type { ResolveHandler, RejectHandler, Response, RequestOptions, QueueItem };
+export type ResolveHandler = (d: HcpResponse) => void;
+export type RejectHandler = (e: unknown) => void;
