@@ -15,6 +15,8 @@ module.exports = {
   collectCoverageFrom: [
     'src/**/*',
     '!src/**/index.ts',
-    '!src/**/interfaces.ts'
+    '!src/**/types.ts',    
   ],
+  testMatch: ["**/*.test.ts"],
+  setupFilesAfterEnv: ['./test/server.setup.ts'],
 };

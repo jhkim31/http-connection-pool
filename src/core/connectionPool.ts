@@ -26,13 +26,13 @@ class ConnectionPool {
               url: item.url,
               method: item.method              
             }
-            request(requestOptions)
-              .then(item.resolve)
-              .catch(item.reject)
-              .finally(() => {
-                this.currentWorkers--;
-                this.events.emit('next');
-              })
+            // request(requestOptions)
+            //   .then(item.resolve)
+            //   .catch(item.reject)
+            //   .finally(() => {
+            //     this.currentWorkers--;
+            //     this.events.emit('next');
+            //   })
             this.events.emit('next');
           }
         }
