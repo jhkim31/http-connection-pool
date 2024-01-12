@@ -33,18 +33,10 @@ export interface HcpRequestOptions {
   body?: HcpRequestBody;
 }
 
-
 export interface HcpResponse {
   status?: number;
   headers: http.IncomingHttpHeaders;
   body: string;
-}
-
-export interface QueueItem {
-  url: string;
-  method: string;
-  resolve?: ResolveHandler;
-  reject?: RejectHandler;
 }
 /**
  * * GET
@@ -64,6 +56,3 @@ export enum Method {
   OPTIONS,
   HEAD
 }
-
-export type ResolveHandler = (d: HcpResponse) => void;
-export type RejectHandler = (e: unknown) => void;

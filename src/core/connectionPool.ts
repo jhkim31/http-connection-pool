@@ -1,39 +1,65 @@
 import { EventEmitter } from 'node:events';
+import Request from './request';
 
-import request from './request';
+export type ResolveHandler = (value: unknown) => void;
+export type RejectHandler = (e: any) => void;
 
-import type { HcpRequestOptions, QueueItem } from "../types";
+// export type UrlInfo = string | {
+//   protocol: string;
+//   host: string;
+//   port?: string | number;
+//   path?: string;
+//   parameter?: {
+//     [key: string]: string;
+//   }
+// }
 
-class ConnectionPool {
-  queue: QueueItem[];
-  maxWorkers: number;
-  currentWorkers: number;
-  events: EventEmitter;  
+export type UrlInfo = string;
 
-  constructor(workers = 4) {
-    this.maxWorkers = workers;
-    this.queue = [];
-    this.events = new EventEmitter();
-    this.currentWorkers = 0;
+export interface RequestOptions {
+  url: UrlInfo;
+  method: string;
+}
 
-    this.events.on('next', () => {
+
+export interface QueueItem {
+  url: UrlInfo;
+  method: string;
+  resolve: ResolveHandler
+  reject: RejectHandler;
+}
+
+export class ConnectionPool {
+  #requestQueue: QueueItem[];
+  #size: number;
+  #currentSize: number;
+  #events: EventEmitter;  
+
+  constructor(size = 10) {
+    this.#size = size;
+    this.#requestQueue = [];
+    this.#events = new EventEmitter();
+    this.#currentSize = 0;
+
+    this.#events.on('next', () => {
       try {
-        if (this.currentWorkers < this.maxWorkers) {
-          const item = this.queue.shift();
-          if (item !== undefined) {
-            this.currentWorkers++;
-            const requestOptions: HcpRequestOptions = {
-              url: item.url,
-              method: item.method              
-            }
-            // request(requestOptions)
-            //   .then(item.resolve)
-            //   .catch(item.reject)
-            //   .finally(() => {
-            //     this.currentWorkers--;
-            //     this.events.emit('next');
-            //   })
-            this.events.emit('next');
+        if (this.#currentSize < this.#size && this.#requestQueue.length > 0) {
+          const request = this.#requestQueue.shift();
+          if (request !== undefined) {
+            this.#currentSize++;
+            const r = new Request({
+              url: new URL(request.url),
+              method: "get"
+            })
+            
+            r.call()
+            .then(request.resolve)
+            .catch(request.reject)
+            .finally(() => {
+                this.#currentSize--;
+                this.#events.emit('next');
+            })
+            this.#events.emit('next');
           }
         }
       } catch (error: unknown) {
@@ -42,10 +68,15 @@ class ConnectionPool {
     })
   }  
 
-  add(item: QueueItem) {    
-    this.queue.push(item);
-    this.events.emit('next');
+  add(options: RequestOptions) {        
+    return new Promise((resolve, reject) => {      
+      this.#requestQueue.push({
+        url: options.url,
+        method: options.method,
+        resolve: resolve,
+        reject: reject
+      });
+      this.#events.emit('next');  
+    })
   }
 }
-
-export {ConnectionPool};

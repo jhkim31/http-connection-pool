@@ -9,7 +9,7 @@ export default [
       file: "dist/index.js",
       format: 'cjs',
     },
-    plugins: [resolve(), typescript({ tsconfig: "./bundleHelper/tsconfig.cjs.json" })]
+    plugins: [resolve(), typescript({ tsconfig: "./bundle/tsconfig.cjs.json" })]
   },
   {
     input: 'src/index.ts',
@@ -17,7 +17,7 @@ export default [
       file: 'dist/index.mjs',
       format: 'esm'
     },
-    plugins: [resolve(), typescript({ tsconfig: "./bundleHelper/tsconfig.esm.json" })]
+    plugins: [resolve(), typescript({ tsconfig: "./bundle/tsconfig.esm.json" })]
   },
   {
     input: 'src/index.ts',
@@ -25,7 +25,7 @@ export default [
       dir: 'dist/types',
       format: 'esm'
     },
-    plugins: [resolve(), typescript({ tsconfig: "./bundleHelper/tsconfig.types.json" })]
+    plugins: [resolve(), typescript({ tsconfig: "./bundle/tsconfig.types.json" })]
   },
   {
     input: "./dist/types/index.d.ts",

@@ -7,7 +7,7 @@ npm install http-connection-pool
 ```
 
 ## Usage
-### CJS
+### CJS (js)
 ```javascript
 const { ConnectionPool } = require("http-connection-pool");
 
@@ -20,7 +20,7 @@ for (let i = 0; i <= 100_000; i++) {
 }
 ```
 
-### ESM
+### ESM (js)
 ```javascript
 import { ConnectionPool } from "http-connection-pool";
 
@@ -33,7 +33,7 @@ for (let i = 0; i <= 100_000; i++) {
 }
 ```
 
-### typescript
+### Typescript
 ```typescript
 import { ConnectionPool } from "http-connection-pool";
 
@@ -45,3 +45,9 @@ for (let i = 0; i <= 100_000; i++) {
   })
 }
 ```
+
+## docs
+### ConnectionPool
+#### workers
+
+### 

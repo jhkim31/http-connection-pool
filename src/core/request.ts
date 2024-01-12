@@ -9,12 +9,12 @@ export default class Request {
   maxRetryCount: number;
   retryDelay: number;
   url: URL;
+  method: string;
 
   isHttps: boolean;
   transport: typeof https | typeof http;
   agent: https.Agent | http.Agent;
 
-  method?: string;
   headers?: HcpRequestHeaders;
   body?: HcpRequestBody;
 
@@ -39,8 +39,9 @@ export default class Request {
 
     this.url = new URL(requestOptions.url);
     this.method = requestOptions.method;
-    this.headers = requestOptions.headers;
+    this.headers = requestOptions.requestHeaders;
     this.isHttps = this.url.protocol === "https:";
+    this.body = requestOptions.requestBody;
     this.transport = this.isHttps ? https : http;
     this.agent = new this.transport.Agent({ keepAlive: true });
     this.body = requestOptions.body;
@@ -48,7 +49,7 @@ export default class Request {
 
   call(): Promise<HcpResponse> {
     return new Promise(async (resolve, reject) => {
-      let retryCount;      
+      let retryCount;
       for (retryCount = 0; retryCount <= this.maxRetryCount; retryCount++) {
         try {
           if (retryCount >= 1) {
@@ -76,7 +77,7 @@ export default class Request {
   }
 
   dispatch(): Promise<HcpResponse> {
-    return new Promise<HcpResponse>((resolve, reject) => {      
+    return new Promise<HcpResponse>((resolve, reject) => {
       const req = this.transport.request(this.url, {
         method: this.method ?? "get",
         agent: this.agent,
@@ -92,7 +93,7 @@ export default class Request {
           resolve({
             status: res.statusCode,
             headers: res.headers,
-            body: JSON.parse(body)
+            body: body
           })
         });
       })
