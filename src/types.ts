@@ -1,15 +1,21 @@
 import * as http from 'node:http';
+import { RequestConfig } from './core/request';
 
-import { AfterRetryHook, BeforeRetryHook, RetryErrorHandler } from './core/request';
+export type BeforeRetryHook = (retryCount: number) => void;
+export type RetryErrorHandler = (error: unknown) => void;
+export type AfterRetryHook = (retryCount: number) => void;
 
 export type HcpRequestHeaders = { [key: string]: string };
 export type HcpRequestBody = string | object;
 
 export interface HcpResponse {
-  status?: number;
+  statusCode?: number;  
+  statusMessage?: string;
   headers: http.IncomingHttpHeaders;
   body: string;
+  config: RequestConfig
 }
+
 export type Retry = {
   maxRetryCount: number;
   retryDelay?: number;
@@ -30,9 +36,9 @@ export type UrlInfo = {
   }
 };
 
-export interface HcpRequestOptions {
+export interface HcpRequestConfig {
   url: string | UrlInfo;
-  method: string | HTTPMethod;
+  method: HTTPMethod;
   retry?: number | Retry;
 }
 

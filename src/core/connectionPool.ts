@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 
-import { HTTPMethod, UrlInfo, HcpRequestOptions } from '../types';
+import { HcpRequestConfig } from '../types';
 import createUrl from '../lib/createUrl';
 import Request from './request';
 import createRetry from '../lib/createRetry';
@@ -50,18 +50,21 @@ export class ConnectionPool {
     })
   }
 
-  add(options: HcpRequestOptions) {
+  addRequest(config: HcpRequestConfig) {
     return new Promise((resolve, reject) => {      
+
       const request = new Request({
-        url: createUrl(options.url),
-        method: options.method,
-        retry: createRetry(options.retry)
-      })
+        url: createUrl(config.url),
+        method: config.method,
+        retry: createRetry(config.retry)
+      });
+
       this.#requestQueue.push({
         request,
         resolve,
         reject
       });
+      
       this.#events.emit('next');
     })
   }

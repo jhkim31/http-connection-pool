@@ -1,17 +1,13 @@
 import http from 'node:http';
 import https from 'node:https';
 
-import { RetryError } from '../lib/error';
-import { HcpRequestBody, HcpRequestHeaders, HcpResponse, Retry } from '../types';
+import { HcpRequestError } from '../lib/error';
+import { AfterRetryHook, BeforeRetryHook, HcpRequestBody, HcpRequestHeaders, HcpResponse, HTTPMethod, Retry, RetryErrorHandler } from '../types';
 import sleep from '../utils/sleep';
 
-export type BeforeRetryHook = (retryCount: number) => void;
-export type RetryErrorHandler = (error: unknown) => void;
-export type AfterRetryHook = (retryCount: number) => void;
-
-export interface RequeestOptions {
+export interface RequestConfig {
   url: URL;
-  method: string;
+  method: HTTPMethod;
 
   retry?: Retry;
   requestHeaders?: HcpRequestHeaders;
@@ -19,6 +15,7 @@ export interface RequeestOptions {
 }
 
 export default class Request {
+  config: RequestConfig;
   maxRetryCount: number;
   retryDelay: number;
   url: URL;
@@ -35,18 +32,19 @@ export default class Request {
   retryErrorHandler?: RetryErrorHandler;
   afterRetryHook?: AfterRetryHook;
 
-  constructor(requestOptions: RequeestOptions) {
-    this.maxRetryCount = requestOptions.retry?.maxRetryCount ?? 0;
-    this.retryDelay = requestOptions.retry?.retryDelay ?? 0;
-    this.beforeRetryHook = requestOptions.retry?.hooks?.beforeRetryHook;
-    this.afterRetryHook = requestOptions.retry?.hooks?.afterRetryHook;
-    this.retryErrorHandler = requestOptions.retry?.hooks?.retryErrorHandler;
+  constructor(config: RequestConfig) {
+    this.config = config;
+    this.maxRetryCount = config.retry?.maxRetryCount ?? 0;
+    this.retryDelay = config.retry?.retryDelay ?? 0;
+    this.beforeRetryHook = config.retry?.hooks?.beforeRetryHook;
+    this.afterRetryHook = config.retry?.hooks?.afterRetryHook;
+    this.retryErrorHandler = config.retry?.hooks?.retryErrorHandler;
 
-    this.url = requestOptions.url;
-    this.method = requestOptions.method;
-    this.headers = requestOptions.requestHeaders;
+    this.url = config.url;
+    this.method = config.method;
+    this.headers = config.requestHeaders;
     this.isHttps = this.url.protocol === "https:";
-    this.body = requestOptions.requestBody;
+    this.body = config.requestBody;
     this.transport = this.isHttps ? https : http;
     this.agent = new this.transport.Agent({ keepAlive: true });
   }
@@ -54,7 +52,8 @@ export default class Request {
   call(): Promise<HcpResponse> {
     return new Promise(async (resolve, reject) => {
       let retryCount;
-      for (retryCount = 0; retryCount <= this.maxRetryCount; retryCount++) {
+      let lastError: any;
+      for (retryCount = 0; retryCount <= this.maxRetryCount; retryCount++) {        
         try {
           if (retryCount >= 1) {
             if (this.beforeRetryHook) {
@@ -66,17 +65,19 @@ export default class Request {
           const res = await this.dispatch();
           resolve(res);
           break;
-        } catch (error: unknown) {
+        } catch (error: unknown) {                    
           if (this.retryErrorHandler) {
             this.retryErrorHandler(error);
           }
+          lastError = error;
         } finally {
           if (retryCount >= 1 && this.afterRetryHook) {
             this.afterRetryHook(retryCount);
           }
         }
       }
-      reject(new RetryError(`The number of retries has been exceeded. (${this.maxRetryCount})`));
+
+      reject(lastError);
     })
   }
 
@@ -87,19 +88,25 @@ export default class Request {
         agent: this.agent,
         headers: this.headers
       }, (res) => {
-        let body = '';
+        if (res?.statusCode && res.statusCode >= 400) {
+          reject(new HcpRequestError(`${res.statusMessage} with status code ${res.statusCode}`, this.config, {req, res}));
+        } else {
+          let body = '';
 
-        res.on('data', (chunk) => {
-          body += chunk;
-        });
+          res.on('data', (chunk) => {
+            body += chunk;
+          });
 
-        res.on('end', () => {
-          resolve({
-            status: res.statusCode,
-            headers: res.headers,
-            body: body
-          })
-        });
+          res.on('end', () => {
+            resolve({
+              statusCode: res.statusCode,
+              statusMessage: res.statusMessage,
+              headers: res.headers,
+              body: body,
+              config: this.config
+            })
+          });
+        }
       })
 
       if (this.body) {
@@ -111,7 +118,7 @@ export default class Request {
       }
 
       req.on('error', (e) => {
-        reject('e');
+        reject(new HcpRequestError(e.message, this.config, {req, origin: e}));
       })
 
       req.end();
