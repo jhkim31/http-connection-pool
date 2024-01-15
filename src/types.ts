@@ -1,13 +1,16 @@
 import * as http from 'node:http';
 
+import { AfterRetryHook, BeforeRetryHook, RetryErrorHandler } from './core/request';
+
 export type HcpRequestHeaders = { [key: string]: string };
 export type HcpRequestBody = string | object;
 
-export type BeforeRetryHook = (retryCount: number) => void;
-export type RetryErrorHandler = (error: unknown) => void;
-export type AfterRetryHook = (retryCount: number) => void;
-
-export interface Retry {
+export interface HcpResponse {
+  status?: number;
+  headers: http.IncomingHttpHeaders;
+  body: string;
+}
+export type Retry = {
   maxRetryCount: number;
   retryDelay?: number;
   hooks?: {
@@ -15,44 +18,29 @@ export interface Retry {
     retryErrorHandler?: RetryErrorHandler;
     afterRetryHook?: AfterRetryHook;
   }
-}
+};
+
+export type UrlInfo = {
+  protocol: "http" | "https";
+  host: string;
+  port?: string | number;
+  path?: string;
+  urlQuery?: {
+    [key: string]: string;
+  }
+};
 
 export interface HcpRequestOptions {
-  url: string;
-  method?: string;
-
+  url: string | UrlInfo;
+  method: string | HTTPMethod;
   retry?: number | Retry;
-
-  headers?: HcpRequestHeaders;
-
-  // protocol?: string;
-  // host?: string;
-  // port?: number | string;  
-  // path?: string;
-
-  body?: HcpRequestBody;
 }
 
-export interface HcpResponse {
-  status?: number;
-  headers: http.IncomingHttpHeaders;
-  body: string;
-}
-/**
- * * GET
- * * POST
- * * PATCH
- * * PUT
- * * DELETE
- * * OPTIONS
- * * HEAD
- */
-export enum Method {
-  GET,
-  POST,
-  PATCH,
-  PUT,
-  DELETE,
-  OPTIONS,
-  HEAD
-}
+export type HTTPMethod =
+  | "get"
+  | "post" 
+  | "patch"
+  | "put"
+  | "delete" 
+  | "options"
+  | "head"

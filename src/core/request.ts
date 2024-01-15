@@ -2,8 +2,21 @@ import http from 'node:http';
 import https from 'node:https';
 
 import { RetryError } from '../lib/error';
-import { AfterRetryHook, BeforeRetryHook, HcpRequestHeaders, HcpRequestBody, HcpRequestOptions, HcpResponse, RetryErrorHandler } from '../types';
+import { HcpRequestBody, HcpRequestHeaders, HcpResponse, Retry } from '../types';
 import sleep from '../utils/sleep';
+
+export type BeforeRetryHook = (retryCount: number) => void;
+export type RetryErrorHandler = (error: unknown) => void;
+export type AfterRetryHook = (retryCount: number) => void;
+
+export interface RequeestOptions {
+  url: URL;
+  method: string;
+
+  retry?: Retry;
+  requestHeaders?: HcpRequestHeaders;
+  requestBody?: HcpRequestBody;
+}
 
 export default class Request {
   maxRetryCount: number;
@@ -22,29 +35,20 @@ export default class Request {
   retryErrorHandler?: RetryErrorHandler;
   afterRetryHook?: AfterRetryHook;
 
-  constructor(requestOptions: HcpRequestOptions) {
-    if (typeof requestOptions.retry === "undefined") {
-      this.maxRetryCount = 0;
-      this.retryDelay = 0;
-    } else if (typeof requestOptions.retry === "number") {
-      this.maxRetryCount = requestOptions.retry;
-      this.retryDelay = 0;
-    } else {
-      this.maxRetryCount = requestOptions.retry.maxRetryCount;
-      this.retryDelay = requestOptions.retry.retryDelay ?? 0;
-      this.beforeRetryHook = requestOptions.retry.hooks?.beforeRetryHook;
-      this.afterRetryHook = requestOptions.retry.hooks?.afterRetryHook;
-      this.retryErrorHandler = requestOptions.retry.hooks?.retryErrorHandler;
-    }
+  constructor(requestOptions: RequeestOptions) {
+    this.maxRetryCount = requestOptions.retry?.maxRetryCount ?? 0;
+    this.retryDelay = requestOptions.retry?.retryDelay ?? 0;
+    this.beforeRetryHook = requestOptions.retry?.hooks?.beforeRetryHook;
+    this.afterRetryHook = requestOptions.retry?.hooks?.afterRetryHook;
+    this.retryErrorHandler = requestOptions.retry?.hooks?.retryErrorHandler;
 
-    this.url = new URL(requestOptions.url);
+    this.url = requestOptions.url;
     this.method = requestOptions.method;
     this.headers = requestOptions.requestHeaders;
     this.isHttps = this.url.protocol === "https:";
     this.body = requestOptions.requestBody;
     this.transport = this.isHttps ? https : http;
     this.agent = new this.transport.Agent({ keepAlive: true });
-    this.body = requestOptions.body;
   }
 
   call(): Promise<HcpResponse> {

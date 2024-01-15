@@ -1,39 +1,24 @@
 import { EventEmitter } from 'node:events';
+
+import { HTTPMethod, UrlInfo, HcpRequestOptions } from '../types';
+import createUrl from '../lib/createUrl';
 import Request from './request';
+import createRetry from '../lib/createRetry';
 
-export type ResolveHandler = (value: unknown) => void;
-export type RejectHandler = (e: any) => void;
+type Resolve = (value: unknown) => void;
+type Reject = (e: any) => void;
 
-// export type UrlInfo = string | {
-//   protocol: string;
-//   host: string;
-//   port?: string | number;
-//   path?: string;
-//   parameter?: {
-//     [key: string]: string;
-//   }
-// }
-
-export type UrlInfo = string;
-
-export interface RequestOptions {
-  url: UrlInfo;
-  method: string;
-}
-
-
-export interface QueueItem {
-  url: UrlInfo;
-  method: string;
-  resolve: ResolveHandler
-  reject: RejectHandler;
+export interface RequestQueueItem {  
+  request: Request;
+  resolve: Resolve
+  reject: Reject;
 }
 
 export class ConnectionPool {
-  #requestQueue: QueueItem[];
+  #requestQueue: RequestQueueItem[];
   #size: number;
   #currentSize: number;
-  #events: EventEmitter;  
+  #events: EventEmitter;
 
   constructor(size = 10) {
     this.#size = size;
@@ -44,21 +29,18 @@ export class ConnectionPool {
     this.#events.on('next', () => {
       try {
         if (this.#currentSize < this.#size && this.#requestQueue.length > 0) {
-          const request = this.#requestQueue.shift();
-          if (request !== undefined) {
-            this.#currentSize++;
-            const r = new Request({
-              url: new URL(request.url),
-              method: "get"
-            })
-            
-            r.call()
-            .then(request.resolve)
-            .catch(request.reject)
-            .finally(() => {
+          const requestItem = this.#requestQueue.shift();
+          if (requestItem !== undefined) {
+            const {request, resolve, reject} = requestItem;
+            this.#currentSize++;    
+
+            request.call()
+              .then(resolve)
+              .catch(reject)
+              .finally(() => {
                 this.#currentSize--;
                 this.#events.emit('next');
-            })
+              })
             this.#events.emit('next');
           }
         }
@@ -66,17 +48,21 @@ export class ConnectionPool {
         console.log('e');
       }
     })
-  }  
+  }
 
-  add(options: RequestOptions) {        
+  add(options: HcpRequestOptions) {
     return new Promise((resolve, reject) => {      
-      this.#requestQueue.push({
-        url: options.url,
+      const request = new Request({
+        url: createUrl(options.url),
         method: options.method,
-        resolve: resolve,
-        reject: reject
+        retry: createRetry(options.retry)
+      })
+      this.#requestQueue.push({
+        request,
+        resolve,
+        reject
       });
-      this.#events.emit('next');  
+      this.#events.emit('next');
     })
   }
 }
