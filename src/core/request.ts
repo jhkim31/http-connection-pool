@@ -1,20 +1,30 @@
 import http from 'node:http';
 import https from 'node:https';
 
-import { RetryError } from '../lib/error';
-import { AfterRetryHook, BeforeRetryHook, HcpRequestHeaders, HcpRequestBody, HcpRequestOptions, HcpResponse, RetryErrorHandler } from '../types';
+import { HcpRequestError } from '../lib/error';
+import { AfterRetryHook, BeforeRetryHook, HcpRequestBody, HcpRequestHeaders, HcpResponse, HTTPMethod, Retry, RetryErrorHandler } from '../types';
 import sleep from '../utils/sleep';
 
+export interface RequestConfig {
+  url: URL;
+  method: HTTPMethod;
+
+  retry?: Retry;
+  requestHeaders?: HcpRequestHeaders;
+  requestBody?: HcpRequestBody;
+}
+
 export default class Request {
+  config: RequestConfig;
   maxRetryCount: number;
   retryDelay: number;
   url: URL;
+  method: string;
 
   isHttps: boolean;
   transport: typeof https | typeof http;
   agent: https.Agent | http.Agent;
 
-  method?: string;
   headers?: HcpRequestHeaders;
   body?: HcpRequestBody;
 
@@ -22,34 +32,28 @@ export default class Request {
   retryErrorHandler?: RetryErrorHandler;
   afterRetryHook?: AfterRetryHook;
 
-  constructor(requestOptions: HcpRequestOptions) {
-    if (typeof requestOptions.retry === "undefined") {
-      this.maxRetryCount = 0;
-      this.retryDelay = 0;
-    } else if (typeof requestOptions.retry === "number") {
-      this.maxRetryCount = requestOptions.retry;
-      this.retryDelay = 0;
-    } else {
-      this.maxRetryCount = requestOptions.retry.maxRetryCount;
-      this.retryDelay = requestOptions.retry.retryDelay ?? 0;
-      this.beforeRetryHook = requestOptions.retry.hooks?.beforeRetryHook;
-      this.afterRetryHook = requestOptions.retry.hooks?.afterRetryHook;
-      this.retryErrorHandler = requestOptions.retry.hooks?.retryErrorHandler;
-    }
+  constructor(config: RequestConfig) {
+    this.config = config;
+    this.maxRetryCount = config.retry?.maxRetryCount ?? 0;
+    this.retryDelay = config.retry?.retryDelay ?? 0;
+    this.beforeRetryHook = config.retry?.hooks?.beforeRetryHook;
+    this.afterRetryHook = config.retry?.hooks?.afterRetryHook;
+    this.retryErrorHandler = config.retry?.hooks?.retryErrorHandler;
 
-    this.url = new URL(requestOptions.url);
-    this.method = requestOptions.method;
-    this.headers = requestOptions.headers;
+    this.url = config.url;
+    this.method = config.method;
+    this.headers = config.requestHeaders;
     this.isHttps = this.url.protocol === "https:";
+    this.body = config.requestBody;
     this.transport = this.isHttps ? https : http;
     this.agent = new this.transport.Agent({ keepAlive: true });
-    this.body = requestOptions.body;
   }
 
   call(): Promise<HcpResponse> {
     return new Promise(async (resolve, reject) => {
-      let retryCount;      
-      for (retryCount = 0; retryCount <= this.maxRetryCount; retryCount++) {
+      let retryCount;
+      let lastError: any;
+      for (retryCount = 0; retryCount <= this.maxRetryCount; retryCount++) {        
         try {
           if (retryCount >= 1) {
             if (this.beforeRetryHook) {
@@ -61,40 +65,48 @@ export default class Request {
           const res = await this.dispatch();
           resolve(res);
           break;
-        } catch (error: unknown) {
+        } catch (error: unknown) {                    
           if (this.retryErrorHandler) {
             this.retryErrorHandler(error);
           }
+          lastError = error;
         } finally {
           if (retryCount >= 1 && this.afterRetryHook) {
             this.afterRetryHook(retryCount);
           }
         }
       }
-      reject(new RetryError(`The number of retries has been exceeded. (${this.maxRetryCount})`));
+
+      reject(lastError);
     })
   }
 
   dispatch(): Promise<HcpResponse> {
-    return new Promise<HcpResponse>((resolve, reject) => {      
+    return new Promise<HcpResponse>((resolve, reject) => {
       const req = this.transport.request(this.url, {
         method: this.method ?? "get",
         agent: this.agent,
         headers: this.headers
       }, (res) => {
-        let body = '';
+        if (res?.statusCode && res.statusCode >= 400) {
+          reject(new HcpRequestError(`${res.statusMessage} with status code ${res.statusCode}`, this.config, {req, res}));
+        } else {
+          let body = '';
 
-        res.on('data', (chunk) => {
-          body += chunk;
-        });
+          res.on('data', (chunk) => {
+            body += chunk;
+          });
 
-        res.on('end', () => {
-          resolve({
-            status: res.statusCode,
-            headers: res.headers,
-            body: JSON.parse(body)
-          })
-        });
+          res.on('end', () => {
+            resolve({
+              statusCode: res.statusCode,
+              statusMessage: res.statusMessage,
+              headers: res.headers,
+              body: body,
+              config: this.config
+            })
+          });
+        }
       })
 
       if (this.body) {
@@ -106,7 +118,7 @@ export default class Request {
       }
 
       req.on('error', (e) => {
-        reject('e');
+        reject(new HcpRequestError(e.message, this.config, {req, origin: e}));
       })
 
       req.end();

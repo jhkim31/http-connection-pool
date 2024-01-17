@@ -1,51 +1,71 @@
 import { EventEmitter } from 'node:events';
 
-import request from './request';
+import { HcpRequestConfig } from '../types';
+import createUrl from '../lib/createUrl';
+import Request from './request';
+import createRetry from '../lib/createRetry';
 
-import type { HcpRequestOptions, QueueItem } from "../types";
+type Resolve = (value: unknown) => void;
+type Reject = (e: any) => void;
 
-class ConnectionPool {
-  queue: QueueItem[];
-  maxWorkers: number;
-  currentWorkers: number;
-  events: EventEmitter;  
+export interface RequestQueueItem {  
+  request: Request;
+  resolve: Resolve
+  reject: Reject;
+}
 
-  constructor(workers = 4) {
-    this.maxWorkers = workers;
-    this.queue = [];
-    this.events = new EventEmitter();
-    this.currentWorkers = 0;
+export class ConnectionPool {
+  #requestQueue: RequestQueueItem[];
+  #size: number;
+  #currentSize: number;
+  #events: EventEmitter;
 
-    this.events.on('next', () => {
+  constructor(size = 10) {
+    this.#size = size;
+    this.#requestQueue = [];
+    this.#events = new EventEmitter();
+    this.#currentSize = 0;
+
+    this.#events.on('next', () => {
       try {
-        if (this.currentWorkers < this.maxWorkers) {
-          const item = this.queue.shift();
-          if (item !== undefined) {
-            this.currentWorkers++;
-            const requestOptions: HcpRequestOptions = {
-              url: item.url,
-              method: item.method              
-            }
-            // request(requestOptions)
-            //   .then(item.resolve)
-            //   .catch(item.reject)
-            //   .finally(() => {
-            //     this.currentWorkers--;
-            //     this.events.emit('next');
-            //   })
-            this.events.emit('next');
+        if (this.#currentSize < this.#size && this.#requestQueue.length > 0) {
+          const requestItem = this.#requestQueue.shift();
+          if (requestItem !== undefined) {
+            const {request, resolve, reject} = requestItem;
+            this.#currentSize++;    
+
+            request.call()
+              .then(resolve)
+              .catch(reject)
+              .finally(() => {
+                this.#currentSize--;
+                this.#events.emit('next');
+              })
+            this.#events.emit('next');
           }
         }
       } catch (error: unknown) {
         console.log('e');
       }
     })
-  }  
+  }
 
-  add(item: QueueItem) {    
-    this.queue.push(item);
-    this.events.emit('next');
+  addRequest(config: HcpRequestConfig) {
+    return new Promise((resolve, reject) => {      
+
+      const request = new Request({
+        url: createUrl(config.url),
+        method: config.method,
+        retry: createRetry(config.retry)
+      });
+
+      this.#requestQueue.push({
+        request,
+        resolve,
+        reject
+      });
+      
+      this.#events.emit('next');
+    })
   }
 }
-
-export {ConnectionPool};

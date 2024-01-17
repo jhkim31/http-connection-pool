@@ -1,13 +1,22 @@
 import * as http from 'node:http';
-
-export type HcpRequestHeaders = { [key: string]: string };
-export type HcpRequestBody = string | object;
+import { RequestConfig } from './core/request';
 
 export type BeforeRetryHook = (retryCount: number) => void;
 export type RetryErrorHandler = (error: unknown) => void;
 export type AfterRetryHook = (retryCount: number) => void;
 
-export interface Retry {
+export type HcpRequestHeaders = { [key: string]: string };
+export type HcpRequestBody = string | object;
+
+export interface HcpResponse {
+  statusCode?: number;  
+  statusMessage?: string;
+  headers: http.IncomingHttpHeaders;
+  body: string;
+  config: RequestConfig
+}
+
+export type Retry = {
   maxRetryCount: number;
   retryDelay?: number;
   hooks?: {
@@ -15,55 +24,29 @@ export interface Retry {
     retryErrorHandler?: RetryErrorHandler;
     afterRetryHook?: AfterRetryHook;
   }
-}
+};
 
-export interface HcpRequestOptions {
-  url: string;
-  method?: string;
+export type UrlInfo = {
+  protocol: "http" | "https";
+  host: string;
+  port?: string | number;
+  path?: string;
+  urlQuery?: {
+    [key: string]: string;
+  }
+};
 
+export interface HcpRequestConfig {
+  url: string | UrlInfo;
+  method: HTTPMethod;
   retry?: number | Retry;
-
-  headers?: HcpRequestHeaders;
-
-  // protocol?: string;
-  // host?: string;
-  // port?: number | string;  
-  // path?: string;
-
-  body?: HcpRequestBody;
 }
 
-
-export interface HcpResponse {
-  status?: number;
-  headers: http.IncomingHttpHeaders;
-  body: string;
-}
-
-export interface QueueItem {
-  url: string;
-  method: string;
-  resolve?: ResolveHandler;
-  reject?: RejectHandler;
-}
-/**
- * * GET
- * * POST
- * * PATCH
- * * PUT
- * * DELETE
- * * OPTIONS
- * * HEAD
- */
-export enum Method {
-  GET,
-  POST,
-  PATCH,
-  PUT,
-  DELETE,
-  OPTIONS,
-  HEAD
-}
-
-export type ResolveHandler = (d: HcpResponse) => void;
-export type RejectHandler = (e: unknown) => void;
+export type HTTPMethod =
+  | "get"
+  | "post" 
+  | "patch"
+  | "put"
+  | "delete" 
+  | "options"
+  | "head"
