@@ -110,9 +110,12 @@ export default class Request {
       })
 
       if (this.body) {
-        if (typeof this.body == "string") {
+        console.log(this.body)
+        if (typeof this.body == "string") {        
+          req.setHeader('Content-Type','text/plain');  
           req.write(this.body);
         } else {
+          req.setHeader('Content-Type','application/json');  
           req.write(JSON.stringify(this.body));
         }
       }

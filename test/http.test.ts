@@ -16,12 +16,36 @@ describe("Simple Request Module Test", () => {
   test('simple post test', async () => {
     const r = new Request({
       url : new URL("http://localhost:3000/post"),
-      method: "post",
+      method: "post"
     })
     const res = await r.call();
 
     expect(res.statusCode).toBe(200);       
     expect(JSON.parse(res.body)).toStrictEqual({ message: 'POST request received' });
+  })
+
+  test('post body test (string)', async () => {
+    const r = new Request({
+      url : new URL("http://localhost:3000/post_body"),
+      method: "post",
+      requestBody: "test"
+    })
+    const res = await r.call();
+
+    expect(res.statusCode).toBe(200);          
+    expect(JSON.parse(res.body)).toStrictEqual({ message: 'test' });
+  })
+
+  test('post body test (json)', async () => {
+    const r = new Request({
+      url : new URL("http://localhost:3000/post_body"),
+      method: "post",
+      requestBody: {"test" : 123}
+    })
+    const res = await r.call();
+
+    expect(res.statusCode).toBe(200);           
+    expect(JSON.parse(res.body)).toStrictEqual({ message: {'test' : 123} });
   })
 
   test('url query test', async () => {
