@@ -109,8 +109,7 @@ export default class Request {
         }
       })
 
-      if (this.body) {
-        console.log(this.body)
+      if (this.body) {        
         if (typeof this.body == "string") {        
           req.setHeader('Content-Type','text/plain');  
           req.write(this.body);

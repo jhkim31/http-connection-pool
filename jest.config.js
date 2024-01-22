@@ -18,5 +18,4 @@ module.exports = {
     '!src/**/types.ts',    
   ],
   testMatch: ["**/*.test.ts"],
-  setupFilesAfterEnv: ['./test/server.setup.ts'],
 };

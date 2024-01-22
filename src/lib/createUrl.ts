@@ -12,7 +12,7 @@ export default function createUrl(urlInfo: UrlInfo | string): URL {
     if (urlInfo.urlQuery) {
       url += "?";
       for (const [key, value] of Object.entries(urlInfo.urlQuery)) {
-        url += `${key}=${value}@`;
+        url += `${key}=${value}&`;
       }
       url = url.substring(0, url.length - 1);
     }

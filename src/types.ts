@@ -32,7 +32,7 @@ export type UrlInfo = {
   port?: string | number;
   path?: string;
   urlQuery?: {
-    [key: string]: string;
+    [key: string]: string | number;
   }
 };
 

@@ -1,6 +1,6 @@
 import isJsonString from "../src/utils/isJsonString";
 
-describe("lib & utils Test", () => {
+describe("lib & utils Test", () => {  
   test('valid json string', () => {
     const j = {
       'a' : 123
