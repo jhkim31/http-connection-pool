@@ -15,7 +15,7 @@ describe("Connection Pool Module Test", () => {
     app.use('/count/:id', (req, res) => {
       res.send(req.params.id);
     })
-    const c = new ConnectionPool(10);
+    const c = new ConnectionPool();
 
     for (let i = 0; i < 10; i++) {
       c.addRequest({
@@ -25,8 +25,8 @@ describe("Connection Pool Module Test", () => {
           port: 3002,
           path: `/count/${i}`,
           urlQuery: {
-            a : 1,
-            b : 2
+            a: 1,
+            b: 2
           }
         },
         method: "get"
@@ -42,34 +42,78 @@ describe("Connection Pool Module Test", () => {
     await c.done();
   });
 
-  test('test UrlInfo', async () => {
-    app.use('/url/info', (req, res) => {      
+  test('UrlInfo test (object)', async () => {
+    app.use('/url/info', (req, res) => {
       res.json(req.query);
     })
     const c = new ConnectionPool();
-
-    for (let i = 0; i < 3; i++) {
-      c.addRequest({
-        url: {
-          protocol: "http",
-          host: "localhost",
-          port: 3002,
-          path: `/url/info`,
-          urlQuery: {
-            a : 1,
-            b : "123"
-          }
-        },
-        method: "get"
+    c.addRequest({
+      url: {
+        protocol: "http",
+        host: "localhost",
+        port: 3002,
+        path: `/url/info`,
+        urlQuery: {
+          a: 1,
+          b: "123"
+        }
+      },
+      method: "get"
+    })
+      .then(d => {
+        expect(JSON.parse(d.body)).toStrictEqual({ a: "1", b: "123" });
       })
-        .then(d => {
-          expect(JSON.parse(d.body)).toStrictEqual({a : 1, b : "123"});
-        })
-        .catch(e => {
-          console.error(e);
-        })
-    }
 
+    c.addRequest({
+      url: "http://localhost:3002/url/info?a=1&b=123",
+      method: "get"
+    })
+      .then(d => {
+        expect(JSON.parse(d.body)).toStrictEqual({ a: "1", b: "123" });
+      })
+    await c.done();
+  });
+
+  test('UrlInfo test (invalid string)', async () => {    
+    const c = new ConnectionPool();
+    c.addRequest({
+      url: "http://localhost:70000",
+      method: "get"
+    })
+      .catch(e => {
+        expect(e.code).toBe("ERR_INVALID_URL");
+      })
+  });
+
+  test('retry test (number)', async () => {
+    const c = new ConnectionPool();
+
+    c.addRequest({
+      url: "http://localhost:3002/retry",
+      method: "get",
+      retry: 3
+    })
+      .catch(e => {
+        expect(e.config.retry.maxRetryCount).toBe(3);
+      })
+    await c.done();
+  });
+
+  test('retry test (object)', async () => {
+    const c = new ConnectionPool();
+    const st = new Date();
+    await c.addRequest({
+      url: "http://localhost:3002/retry",
+      method: "get",
+      retry: {
+        maxRetryCount: 3,
+        retryDelay: 1000
+      }
+    })
+      .catch(e => {
+        const et = new Date();
+        expect(et.getTime() - st.getTime()).toBeGreaterThan(3000);
+      })
     await c.done();
   });
 })

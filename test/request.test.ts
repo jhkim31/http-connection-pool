@@ -2,7 +2,7 @@ import Request from "../src/core/request";
 import { HcpRequestError } from "../src/lib/error";
 import app from "./server";
 
-describe("Simple Request Module Test", () => {
+describe("Request Module Test", () => {
   let server: any;
   beforeAll(async () => {
     server = app.listen(3000)
@@ -104,19 +104,4 @@ describe("Simple Request Module Test", () => {
     expect(res.statusCode).toBe(200);
     expect(JSON.parse(res.body)).toStrictEqual({ 'test': 123 });
   })
-
-  // test('url query test', async () => {
-  //   app.get('/url/query', (req, res) => {
-  //     console.log(req.query);
-  //     res.json(req.query);
-  //   })
-  //   const r = new Request({
-  //     url: new URL("http://localhost:3000/url/query?a=1&b=2"),
-  //     method: "get",
-  //   })
-  //   const res = await r.call();
-
-  //   expect(res.statusCode).toBe(200);
-  //   expect(JSON.parse(res.body)).toStrictEqual({ a: '1', b: '2' });
-  // });
 });

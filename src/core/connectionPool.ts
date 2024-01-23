@@ -48,19 +48,23 @@ export class ConnectionPool {
 
   addRequest(config: HcpRequestConfig): Promise<HcpResponse> {
     return new Promise<HcpResponse>((resolve, reject) => {
-      const request = new Request({
-        url: createUrl(config.url),
-        method: config.method,
-        retry: createRetry(config.retry)
-      });
-
-      this.#requestQueue.push({
-        request,
-        resolve,
-        reject
-      });
-
-      this.#events.emit('next');
+      try {
+        const request = new Request({
+          url: createUrl(config.url),
+          method: config.method,
+          retry: createRetry(config.retry)
+        });
+  
+        this.#requestQueue.push({
+          request,
+          resolve,
+          reject
+        });
+  
+        this.#events.emit('next');
+      } catch (error) {
+        reject(error);
+      }      
     })
   }
 

@@ -7,7 +7,7 @@ export default function createUrl(urlInfo: UrlInfo | string): URL {
     let url = urlInfo.protocol + "://";
     url += urlInfo.host;
     url += urlInfo.port ? `:${urlInfo.port}` : "";
-    url += urlInfo.path ? urlInfo.path : "";
+    url += urlInfo.path ? (urlInfo.path[0] === "/" ? urlInfo.path : `/${urlInfo.path}`) : "";
 
     if (urlInfo.urlQuery) {
       url += "?";
