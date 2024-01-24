@@ -4,15 +4,18 @@ import app from "./server";
 
 describe("Request Module Test", () => {
   let server: any;
-  beforeAll(async () => {
+  beforeAll(() => {
     server = app.listen(3000)
   })
 
-  afterAll(async () => {
-    await server.close();
+  afterAll(() => {
+    server.close();
   })
 
   test('GET get string', async () => {
+    /**
+     * GET string
+     */
     app.get('/get/string', (req, res) => {
       res.send('GET');
     })
@@ -28,6 +31,9 @@ describe("Request Module Test", () => {
   })
 
   test('GET get json', async () => {
+    /**
+     * GET json
+     */
     app.get('/get/json', (req, res) => {
       res.json({ message: 'GET' });
     })
@@ -43,6 +49,9 @@ describe("Request Module Test", () => {
   })
 
   test('POST get string', async () => {
+    /**
+     * Get string
+     */
     app.post('/post/string', (req, res) => {
       res.send('POST');
     })
@@ -58,6 +67,9 @@ describe("Request Module Test", () => {
   })
 
   test('POST get json', async () => {
+    /**
+     * Get json
+     */
     app.post('/post/json', (req, res) => {
       res.json({ message: 'POST' });
     })
@@ -74,6 +86,9 @@ describe("Request Module Test", () => {
   })
 
   test('POST send string', async () => {
+    /**
+     * Send a string to the body and receive thet string as a result.
+     */
     app.post('/post/send/string', (req, res) => {
       res.send(req.body);
     })
@@ -90,6 +105,9 @@ describe("Request Module Test", () => {
   })
 
   test('POST send json', async () => {
+    /**
+     * * Send a json to the body and receive thet json string as a result.
+     */
     app.post('/post/send/json', (req, res) => {
       res.json(req.body);
     })

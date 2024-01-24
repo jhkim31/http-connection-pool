@@ -7,18 +7,20 @@ export type AfterRetryHook = (retryCount: number) => void;
 
 export type HcpRequestHeaders = { [key: string]: string };
 export type HcpRequestBody = string | object;
+export type ms = number;
 
 export interface HcpResponse {
   statusCode?: number;  
   statusMessage?: string;
   headers: http.IncomingHttpHeaders;
   body: string;
-  config: RequestConfig
+  config: RequestConfig,
+  retryCount?: number;
 }
 
 export type Retry = {
   maxRetryCount: number;
-  retryDelay?: number;
+  retryDelay?: ms;
   hooks?: {
     beforeRetryHook?: BeforeRetryHook;
     retryErrorHandler?: RetryErrorHandler;
@@ -37,7 +39,7 @@ export type UrlInfo = {
 };
 
 export interface HcpRequestConfig {
-  url: string | UrlInfo;
+  urlInfo: string | UrlInfo;
   method: HTTPMethod;
   retry?: number | Retry;
 }

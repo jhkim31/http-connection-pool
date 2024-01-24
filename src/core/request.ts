@@ -16,6 +16,7 @@ export interface RequestConfig {
 
 export default class Request {
   config: RequestConfig;
+  retryCount: number;
   maxRetryCount: number;
   retryDelay: number;
   url: URL;
@@ -34,6 +35,7 @@ export default class Request {
 
   constructor(config: RequestConfig) {
     this.config = config;
+    this.retryCount = 0;
     this.maxRetryCount = config.retry?.maxRetryCount ?? 0;
     this.retryDelay = config.retry?.retryDelay ?? 0;
     this.beforeRetryHook = config.retry?.hooks?.beforeRetryHook;
@@ -50,14 +52,13 @@ export default class Request {
   }
 
   call(): Promise<HcpResponse> {
-    return new Promise(async (resolve, reject) => {
-      let retryCount;
+    return new Promise(async (resolve, reject) => {      
       let lastError: any;
-      for (retryCount = 0; retryCount <= this.maxRetryCount; retryCount++) {        
+      while(this.retryCount <= this.maxRetryCount) {
         try {
-          if (retryCount >= 1) {
+          if (this.retryCount >= 1) {
             if (this.beforeRetryHook) {
-              this.beforeRetryHook(retryCount);
+              this.beforeRetryHook(this.retryCount);
             }
             await sleep(this.retryDelay);
           }
@@ -70,12 +71,13 @@ export default class Request {
             this.retryErrorHandler(error);
           }
           lastError = error;
-        } finally {
-          if (retryCount >= 1 && this.afterRetryHook) {
-            this.afterRetryHook(retryCount);
+        } finally {          
+          if (this.retryCount >= 1 && this.afterRetryHook) {
+            this.afterRetryHook(this.retryCount);
           }
+          this.retryCount++;
         }
-      }
+      }      
 
       reject(lastError);
     })
@@ -89,7 +91,7 @@ export default class Request {
         headers: this.headers
       }, (res) => {
         if (res?.statusCode && res.statusCode >= 400) {
-          reject(new HcpRequestError(`${res.statusMessage} with status code ${res.statusCode}`, this.config, {req, res}));
+          reject(new HcpRequestError(`${res.statusMessage} with status code ${res.statusCode}`, this.config, {req, res, retryCount: this.retryCount}));
         } else {
           let body = '';
 
@@ -120,7 +122,7 @@ export default class Request {
       }
 
       req.on('error', (e) => {
-        reject(new HcpRequestError(e.message, this.config, {req, origin: e}));
+        reject(new HcpRequestError(e.message, this.config, {req, origin: e, retryCount: this.retryCount}));
       })
 
       req.end();

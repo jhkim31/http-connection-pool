@@ -4,15 +4,18 @@ import { HcpRequestError } from "../src/lib/error";
 
 describe('Request Module Error Test', () => {
   let server: any;
-  beforeAll(async () => {
+  beforeAll(() => {
     server = app.listen(3001)
   })
 
-  afterAll(async () => {
-    await server.close();
+  afterAll(() => {
+    server.close();
   })
 
   test('404 test', async () => {
+    /**
+     * check 404 status code
+     */
     const r = new Request({
       url: new URL("http://localhost:3001/404"),
       method: "get"
@@ -21,12 +24,32 @@ describe('Request Module Error Test', () => {
       await r.call()
     } catch (error: unknown) {
       if (error instanceof HcpRequestError) {
-        expect(error?.res?.statusCode).toBe(404);
+        expect(error.res?.statusCode).toBe(404);
       }
     }
   })
 
-  test('Unreachable test', async () => {
+  test('Unreachable Destination (port)', async () => {
+    /**
+     * When the host is reachable, but the port is not.
+     */
+    const r = new Request({
+      url: new URL("http://localhost:9999"),
+      method: "get"
+    })
+    try {
+      await r.call()
+    } catch (error: unknown) {
+      if (error instanceof HcpRequestError) {
+        expect(error.message).toBe("connect ECONNREFUSED ::1:9999");
+      }
+    }
+  })
+
+  test('Unreachable Destination (host)', async () => {
+    /**
+     * When the host is unreachable.
+     */
     const r = new Request({
       url: new URL("https://jcopy.net"),
       method: "get"
@@ -41,6 +64,10 @@ describe('Request Module Error Test', () => {
   })
 
   test('retry test', async () => {
+    /**
+     * Inccur retry, 
+     * Check how many times retryHook was actually executed
+     */
     let beforeHookCounter = 0;
     let afterHookCounter = 0;
     const r = new Request({

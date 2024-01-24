@@ -50,7 +50,7 @@ export class ConnectionPool {
     return new Promise<HcpResponse>((resolve, reject) => {
       try {
         const request = new Request({
-          url: createUrl(config.url),
+          url: createUrl(config.urlInfo),
           method: config.method,
           retry: createRetry(config.retry)
         });
