@@ -1,8 +1,17 @@
 import * as http from 'node:http';
 import { RequestConfig } from './core/request';
 
+/**
+ * Executed before retry.
+ */
 export type BeforeRetryHook = (retryCount: number) => void;
+/**
+ * Executed when error caught.
+ */
 export type RetryErrorHandler = (error: unknown) => void;
+/**
+ * Executed after retry.
+ */
 export type AfterRetryHook = (retryCount: number) => void;
 
 export type HcpRequestHeaders = { [key: string]: string };
@@ -40,7 +49,7 @@ export type UrlInfo = {
 
 export interface HcpRequestConfig {
   urlInfo: string | UrlInfo;
-  method: HTTPMethod;
+  method?: HTTPMethod;
   retry?: number | Retry;
 }
 

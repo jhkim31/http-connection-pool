@@ -1,5 +1,12 @@
 import { UrlInfo } from "../types";
 
+/**
+ * Return URL object.
+ * 
+ * Receive url string or {@link UrlInfo Url Info Object}
+ * @param urlInfo {@link UrlInfo}
+ * @returns 
+ */
 export default function createUrl(urlInfo: UrlInfo | string): URL {
   if (typeof urlInfo === "string") {
     return new URL(urlInfo);
