@@ -6,12 +6,25 @@ import { AfterRetryHook, BeforeRetryHook, HcpRequestBody, HcpRequestHeaders, Hcp
 import sleep from '../utils/sleep';
 
 /**
+ * Constructor parameters of Request class
  * 
+ * url is Required
  */
 export interface RequestConfig {
+  /**
+   * Target Url Object
+   */
   url: URL;
+  /**
+   * Request HTTP Method 
+   * 
+   * {@link HTTPMethod}
+   */
   method?: HTTPMethod;
 
+  /**
+   * Retry Object 
+   */
   retry?: Retry;
   requestHeaders?: HcpRequestHeaders;
   requestBody?: HcpRequestBody;

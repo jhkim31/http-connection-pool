@@ -48,7 +48,7 @@ export type UrlInfo = {
 };
 
 export interface HcpRequestConfig {
-  urlInfo: string | UrlInfo;
+  url: string | UrlInfo;
   method?: HTTPMethod;
   retry?: number | Retry;
 }

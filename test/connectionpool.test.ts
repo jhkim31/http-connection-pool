@@ -23,8 +23,8 @@ describe("Connection Pool Module Test", () => {
     const c = new ConnectionPool();
 
     for (let i = 0; i < 10; i++) {
-      c.addRequest({
-        urlInfo: {
+      c.add({
+        url: {
           protocol: "http",
           host: "localhost",
           port: 3002,
@@ -52,8 +52,8 @@ describe("Connection Pool Module Test", () => {
       res.json(req.query);
     })
     const c = new ConnectionPool();
-    c.addRequest({
-      urlInfo: {
+    c.add({
+      url: {
         protocol: "http",
         host: "localhost",
         port: 3002,
@@ -69,8 +69,8 @@ describe("Connection Pool Module Test", () => {
         expect(JSON.parse(d.body)).toStrictEqual({ a: "1", b: "123" });
       })
 
-    c.addRequest({
-      urlInfo: "http://localhost:3002/url/info?a=1&b=123",
+    c.add({
+      url: "http://localhost:3002/url/info?a=1&b=123",
       method: "get"
     })
       .then(d => {
@@ -85,8 +85,8 @@ describe("Connection Pool Module Test", () => {
      * thrown error has property `code`
      */ 
     const c = new ConnectionPool();
-    c.addRequest({
-      urlInfo: "http://localhost:70000",
+    c.add({
+      url: "http://localhost:70000",
       method: "get"
     })
       .catch(e => {
@@ -104,8 +104,8 @@ describe("Connection Pool Module Test", () => {
      */
     const c = new ConnectionPool();
 
-    c.addRequest({
-      urlInfo: "http://localhost:3002/retry",
+    c.add({
+      url: "http://localhost:3002/retry",
       method: "get",
       retry: 3
     })
@@ -122,8 +122,8 @@ describe("Connection Pool Module Test", () => {
      */
     const c = new ConnectionPool();
     const st = new Date();
-    await c.addRequest({
-      urlInfo: "http://localhost:3002/retry",
+    await c.add({
+      url: "http://localhost:3002/retry",
       method: "get",
       retry: {
         maxRetryCount: 3,

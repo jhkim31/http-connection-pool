@@ -1,5 +1,4 @@
 import Request from "../src/core/request";
-import { HcpRequestError } from "../src/lib/error";
 import app from "./server";
 
 describe("Request Module Test", () => {
