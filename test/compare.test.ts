@@ -6,25 +6,25 @@ import ConnectionPool from "../src";
 
 describe("Compare connection pool and batch request", () => {
   let server: any;
+  const httpAgent = new http.Agent({ keepAlive: true });
+  const httpsAgent = new https.Agent({ keepAlive: true });
   beforeAll(() => {
     server = app.listen(3003);
+    app.get('/test', (req, res) => {
+      setTimeout(() => {
+        res.send("OK");
+      }, Math.random() * 200);
+    });
+
   })
 
   afterAll(() => {
     server.close();
   })
 
-  test('simple get test', async () => {
-    app.get('/test', (req, res) => {
-      setTimeout(() => {
-        res.send("OK");
-      }, Math.random() * 100);
-    });
-    const httpAgent = new http.Agent({ keepAlive: true });
-    const httpsAgent = new https.Agent({ keepAlive: true });
-
+  test('Process 100 requests in 10 batches', async () => {
     console.log("test 1 batch request");
-    const st1 = new Date();
+    const st = new Date();
     for (let i = 0; i < 10; i++) {
       const promiseList: Promise<any>[] = [];
       for (let j = 0; j < 10; j++) {
@@ -38,11 +38,13 @@ describe("Compare connection pool and batch request", () => {
 
       await Promise.allSettled(promiseList)
     }
-    const et1 = new Date();
-    console.log(`test 1 : ${et1.getTime() - st1.getTime()}ms`);
+    const et = new Date();
+    console.log(`test 1 : ${et.getTime() - st.getTime()}ms`);
+  })
+  test('Process 100 requests in ConnectionPool(10)', async () => {
 
     console.log("test 2 connection pool");
-    const st2 = new Date();
+    const st = new Date();
     const connectionPool = new ConnectionPool(10);
     for (let i = 0; i < 100; i++) {
       connectionPool.add({
@@ -50,7 +52,7 @@ describe("Compare connection pool and batch request", () => {
       })
     }
     await connectionPool.done();
-    const et2 = new Date();
-    console.log(`test 2 : ${et2.getTime() - st2.getTime()}ms`);
+    const et = new Date();    
+    console.log(`test 2 : ${et.getTime() - st.getTime()}ms`);    
   })
 })

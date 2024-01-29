@@ -36,7 +36,7 @@ export class ConnectionPool {
    * Limit the number of requests that can be performed simultaneously.
    * 
    * It has the same role as the number of threads in the thread-pool.
-   */  
+   */
   size: number;
   /**
    * Number of requests currently being performed concurrently.
@@ -63,8 +63,8 @@ export class ConnectionPool {
     this.#requestQueue = [];
     this.#events = new EventEmitter();
     this.currentSize = 0;
-    this.httpAgent = new http.Agent({keepAlive: true});
-    this.httpsAgent = new https.Agent({keepAlive: true});
+    this.httpAgent = new http.Agent({ keepAlive: true });
+    this.httpsAgent = new https.Agent({ keepAlive: true });
     /**
      * The 'next' event performs the queued request and calls the 'next' event.
      * 
@@ -82,10 +82,10 @@ export class ConnectionPool {
             .catch(reject)
             .finally(() => {
               this.currentSize--;
-              this.#events.emit('next');       
+              this.#events.emit('next');
               if (this.currentSize === 0) {
                 this.#events.emit("done");
-              }       
+              }
             })
           this.#events.emit('next');
         }
@@ -100,7 +100,7 @@ export class ConnectionPool {
    */
   add(config: HcpRequestConfig): Promise<HcpResponse> {
     return new Promise<HcpResponse>((resolve, reject) => {
-      try {        
+      try {
         const request = new Request({
           url: createUrl(config.url),
           httpAgent: this.httpAgent,
@@ -108,40 +108,46 @@ export class ConnectionPool {
           method: config.method,
           retry: createRetry(config.retry)
         });
-  
+
         this.#requestQueue.push({
           request,
           resolve,
           reject
         });
-  
+
         this.#events.emit('next');
       } catch (error) {
         reject(error);
-      }      
+      }
     })
   }
-  
+
   /**
    * Return remaining queue size
    * @returns 
    */
-  getRemainingQueueSize(){
+  getRemainingQueueSize() {
     return this.#requestQueue.length;
   }
 
   /**
-   * Return Promise. 
+   * Return Promise.
    * 
-   * Periodically checks whether all tasks remaining in the queue have been completed (the queue is empty).
+   * After calling this method, the promise is fulfilled the first time the queue size becomes 0.
    * 
-   * If the queue is empty, change the Promise state to fulfilled. 
+   * If the queue size is 0, Promise is fulfilled immediately.
    */
-  done() {    
-    return new Promise<void>((resolve) => {
-      this.#events.once('done', () => {
+  done(): Promise<void> {
+    if (this.#requestQueue.length === 0) {
+      return new Promise<void>((resolve) => {
         resolve();
-      });      
-    })
+      })
+    } else {
+      return new Promise<void>((resolve) => {
+        this.#events.once('done', () => {
+          resolve();
+        });
+      })
+    }
   }
 }
