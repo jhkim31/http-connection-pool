@@ -7,7 +7,7 @@ module.exports = {
     "default",
     ["jest-html-reporters", {
       "publicPath": "./html-report",
-      "filename": "report.html",
+      "filename": "index.html",
       "expand": true
     }]
   ],  
@@ -17,5 +17,5 @@ module.exports = {
     '!src/**/index.ts',
     '!src/**/types.ts',    
   ],
-  testMatch: ["**/*.test.ts"],
+  testMatch: ["**/*.test.ts", "**/*.test.mts"],
 };

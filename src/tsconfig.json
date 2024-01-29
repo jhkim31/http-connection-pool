@@ -1,13 +1,15 @@
+
 {
   "compilerOptions": {
     "lib": [
       "es2020"
-    ],    
+    ],
+    "module": "NodeNext",
     "target": "es2020",
     "strict": true,
     "rootDir": "./src",            
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "bundler",
+    "moduleResolution": "NodeNext",
     "declaration": true,        
     "esModuleInterop": true,
     "resolveJsonModule": true
