@@ -1,9 +1,11 @@
 import { EventEmitter } from 'node:events';
+import http from 'node:http';
+import https from 'node:https';
 
-import { HcpRequestConfig, HcpResponse, ms } from '../types';
-import createUrl from '../lib/createUrl';
-import Request from './request';
 import createRetry from '../lib/createRetry';
+import createUrl from '../lib/createUrl';
+import { HcpRequestConfig, HcpResponse, ms } from '../types';
+import Request from './request';
 
 type Resolve = (value: HcpResponse | PromiseLike<HcpResponse>) => void;
 type Reject = (e: any) => void;
@@ -34,7 +36,7 @@ export class ConnectionPool {
    * Limit the number of requests that can be performed simultaneously.
    * 
    * It has the same role as the number of threads in the thread-pool.
-   */
+   */  
   size: number;
   /**
    * Number of requests currently being performed concurrently.
@@ -47,12 +49,22 @@ export class ConnectionPool {
    */
   #events: EventEmitter;
 
+  /**
+   * To use the same httpAgent in many Request instances
+   */
+  httpAgent: http.Agent;
+  /**
+   * To use the same httpsAgent in many Request instances
+   */
+  httpsAgent: https.Agent;
+
   constructor(size = 10) {
     this.size = size;
     this.#requestQueue = [];
     this.#events = new EventEmitter();
     this.currentSize = 0;
-
+    this.httpAgent = new http.Agent({keepAlive: true});
+    this.httpsAgent = new https.Agent({keepAlive: true});
     /**
      * The 'next' event performs the queued request and calls the 'next' event.
      * 
@@ -70,7 +82,10 @@ export class ConnectionPool {
             .catch(reject)
             .finally(() => {
               this.currentSize--;
-              this.#events.emit('next');
+              this.#events.emit('next');       
+              if (this.currentSize === 0) {
+                this.#events.emit("done");
+              }       
             })
           this.#events.emit('next');
         }
@@ -85,9 +100,11 @@ export class ConnectionPool {
    */
   add(config: HcpRequestConfig): Promise<HcpResponse> {
     return new Promise<HcpResponse>((resolve, reject) => {
-      try {
+      try {        
         const request = new Request({
           url: createUrl(config.url),
+          httpAgent: this.httpAgent,
+          httpsAgent: this.httpsAgent,
           method: config.method,
           retry: createRetry(config.retry)
         });
@@ -120,14 +137,11 @@ export class ConnectionPool {
    * 
    * If the queue is empty, change the Promise state to fulfilled. 
    */
-  done(interval: ms = 1000) {
+  done() {    
     return new Promise<void>((resolve) => {
-      const i = setInterval(() => {
-        if (this.#requestQueue.length === 0) {
-          resolve();
-          clearInterval(i);
-        }
-      }, interval)
+      this.#events.once('done', () => {
+        resolve();
+      });      
     })
   }
 }

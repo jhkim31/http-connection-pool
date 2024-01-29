@@ -21,6 +21,14 @@ export interface RequestConfig {
    * {@link HTTPMethod}
    */
   method?: HTTPMethod;
+  /**
+   * Use of an externally created httpAgent to reuse TCP connections.
+   */
+  httpAgent?: http.Agent;
+  /**
+   * Use of an externally created httpsAgent to reuse TCP connections.
+   */
+  httpsAgent?: https.Agent;
 
   /**
    * Retry Object 
@@ -125,7 +133,7 @@ export default class Request {
     this.isHttps = this.url.protocol === "https:";
     this.body = config.requestBody;
     this.transport = this.isHttps ? https : http;
-    this.agent = new this.transport.Agent({ keepAlive: true });
+    this.agent = this.isHttps ? (config.httpsAgent ?? new https.Agent({keepAlive: true})) : (config.httpAgent ?? new http.Agent({keepAlive: true}));
   }
 
   /**
