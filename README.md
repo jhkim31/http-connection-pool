@@ -1,7 +1,7 @@
 # http-connection-pool
 **http-connection-pool** quickly processes many HTTP requests in concurrency that cannot be processed at once like a **thread-pool**.
 
-## contents
+## Table of contents
 * [Installation](#installation)
 * [Usage](#usage)
   * [CJS (js)](#cjs-js)
