@@ -1,6 +1,17 @@
-import * as http from 'node:http';
-import { RequestConfig } from './core/request';
+import http from "node:http";
+import { RequestConfig } from "./core/request";
 
+export type HcpRequestHeaders = { [key: string]: string };
+export type HcpRequestBody = string | object;
+
+export interface HcpResponse {
+  statusCode?: number;
+  statusMessage?: string;
+  headers: http.IncomingHttpHeaders;
+  body: string;
+  config: RequestConfig,
+  retryCount?: number;
+}
 /**
  * Executed before retry.
  */
@@ -14,30 +25,8 @@ export type RetryErrorHandler = (error: unknown) => void;
  */
 export type AfterRetryHook = (retryCount: number) => void;
 
-export type HcpRequestHeaders = { [key: string]: string };
-export type HcpRequestBody = string | object;
-export type ms = number;
 
-export interface HcpResponse {
-  statusCode?: number;  
-  statusMessage?: string;
-  headers: http.IncomingHttpHeaders;
-  body: string;
-  config: RequestConfig,
-  retryCount?: number;
-}
-
-export type Retry = {
-  maxRetryCount: number;
-  retryDelay?: ms;
-  hooks?: {
-    beforeRetryHook?: BeforeRetryHook;
-    retryErrorHandler?: RetryErrorHandler;
-    afterRetryHook?: AfterRetryHook;
-  }
-};
-
-export type UrlInfo = {
+export interface UrlInfo {
   protocol: "http" | "https";
   host: string;
   port?: string | number;
@@ -50,14 +39,26 @@ export type UrlInfo = {
 export interface HcpRequestConfig {
   url: string | UrlInfo;
   method?: HTTPMethod;
-  retry?: number | Retry;
+  retry?: number | RetryConfig;
 }
+
+export interface RetryConfig {
+  maxRetryCount: number;
+  retryDelay?: ms;
+  hooks?: {
+    beforeRetryHook?: BeforeRetryHook;
+    retryErrorHandler?: RetryErrorHandler;
+    afterRetryHook?: AfterRetryHook;
+  }
+};
+
+export type ms = number;
 
 export type HTTPMethod =
   | "get"
-  | "post" 
+  | "post"
   | "patch"
   | "put"
-  | "delete" 
+  | "delete"
   | "options"
   | "head"

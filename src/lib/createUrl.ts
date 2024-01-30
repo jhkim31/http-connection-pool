@@ -7,7 +7,7 @@ import { UrlInfo } from "../types";
  * @param urlInfo {@link UrlInfo}
  * @returns 
  */
-export default function createUrl(urlInfo: UrlInfo | string): URL {
+export function createUrl(urlInfo: UrlInfo | string): URL {
   if (typeof urlInfo === "string") {
     return new URL(urlInfo);
   } else {

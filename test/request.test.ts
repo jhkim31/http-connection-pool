@@ -1,5 +1,5 @@
-import {Request} from "../src/index";
-import app from "./server";
+import Request from '../src/core/request';
+import app from './server';
 
 describe("Request Module Test", () => {
   let server: any;

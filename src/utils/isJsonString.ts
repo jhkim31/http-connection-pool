@@ -3,7 +3,7 @@
  * @param jsonStr json string
  * @returns boolean
  */
-export default function isJsonString(jsonStr: string) {
+export function isJsonString(jsonStr: string) {
   try {
     JSON.parse(jsonStr);
     return true;

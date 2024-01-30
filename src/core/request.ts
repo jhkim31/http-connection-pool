@@ -1,9 +1,9 @@
 import http from 'node:http';
 import https from 'node:https';
 
-import { HcpRequestError } from '../lib/error';
-import { AfterRetryHook, BeforeRetryHook, HcpRequestBody, HcpRequestHeaders, HcpResponse, HTTPMethod, ms, Retry, RetryErrorHandler } from '../types';
-import sleep from '../utils/sleep';
+import { HcpRequestError } from '../error/HcpRequestError';
+import { HTTPMethod, ms, RetryConfig, HcpRequestHeaders, HcpRequestBody, HcpResponse, AfterRetryHook, RetryErrorHandler, BeforeRetryHook } from '../types';
+import { sleep } from '../utils';
 
 /**
  * Constructor parameters of Request class
@@ -33,7 +33,7 @@ export interface RequestConfig {
   /**
    * Retry Object 
    */
-  retry?: Retry;
+  retry?: RetryConfig;
   requestHeaders?: HcpRequestHeaders;
   requestBody?: HcpRequestBody;
 }

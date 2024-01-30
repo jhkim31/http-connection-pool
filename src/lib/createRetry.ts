@@ -1,4 +1,4 @@
-import { Retry } from "../types";
+import { RetryConfig } from '../types';
 
 /**
  * ```typescript
@@ -7,7 +7,7 @@ import { Retry } from "../types";
     retryDelay: 0
   }
  * ```
-  Return {@link Retry Retry Object}
+  Return {@link RetryConfig RetryConfig}
 
  * If the param is 
  * * undefined => {@link defaultConfig}
@@ -17,7 +17,7 @@ import { Retry } from "../types";
  * @returns 
  */
 
-export default function createRetry (retry: undefined | number | Retry): Retry {
+export function createRetry (retry: undefined | number | RetryConfig): RetryConfig {
   const defaultConfig = {
     maxRetryCount: 0,
     retryDelay: 0
