@@ -1,15 +1,10 @@
 {
   "name": "http-connection-pool",
   "version": "0.1.0",
-  "description": "http connection pool",
+  "description": "Fast multiple HTTP request client for Node.js",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
-  "directories": {
-    "src": "source",
-    "dist": "build",
-    "test": "test"
-  },
+  "types": "./dist/index.d.ts",  
   "scripts": {
     "test": "npx jest",
     "bundle": "npx rollup -c && rm -rf dist/types"

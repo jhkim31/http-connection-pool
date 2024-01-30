@@ -1,13 +1,8 @@
 import app from "./server";
-import Request from "../src/core/request";
-import { HcpRequestError } from "../src/lib/error";
-import http from "node:http";
-import https from "node:https";
+import { HcpRequestError, Request } from "../src/index";
 
 describe('Request Module Error Test', () => {
-  let server: any;
-  const httpAgent = new http.Agent()
-  const httpsAgent = new http.Agent()
+  let server: any;  
   beforeAll(() => {
     server = app.listen(3001)
   })
