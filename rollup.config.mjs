@@ -22,7 +22,7 @@ export default [
   {
     input: 'src/index.ts',
     output: {
-      dir: 'dist/types',
+      dir: 'dist/types',      
       format: 'esm'
     },
     plugins: [resolve(), typescript({ tsconfig: "./tsconfig.json", outDir : "./dist/types", emitDeclarationOnly : true })]

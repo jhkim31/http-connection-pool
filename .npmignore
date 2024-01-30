@@ -5,3 +5,4 @@ example
 coverage
 html-report
 jest.config.js
+.vscode

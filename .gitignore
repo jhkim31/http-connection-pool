@@ -5,3 +5,4 @@
 **/coverage
 **/html-report
 package-lock.json
+**/.vscode

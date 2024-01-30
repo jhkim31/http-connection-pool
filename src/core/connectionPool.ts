@@ -151,3 +151,5 @@ export class ConnectionPool {
     }
   }
 }
+
+export {Request};

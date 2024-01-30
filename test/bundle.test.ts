@@ -1,4 +1,4 @@
-import ConnectionPool from "../dist/index";
+import ConnectionPool from "http-connection-pool";
 import app from "./server";
 
 describe("Connection Pool Module Test", () => {
