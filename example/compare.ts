@@ -1,4 +1,4 @@
-import ConnectionPool, { Request } from 'http-connection-pool';
+import ConnectionPool, { Request, RequestConfig } from 'http-connection-pool';
 import http from 'node:http';
 import https from 'node:https';
 

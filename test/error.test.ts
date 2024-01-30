@@ -1,8 +1,9 @@
-import app from "./server";
-import { HcpRequestError, Request } from "../src/index";
+import Request from '../src/core/request';
+import { HcpRequestError } from '../src/error';
+import app from './server';
 
 describe('Request Module Error Test', () => {
-  let server: any;  
+  let server: any;
   beforeAll(() => {
     server = app.listen(3001)
   })

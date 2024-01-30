@@ -1,8 +1,6 @@
-import isJsonString from "../src/utils/isJsonString";
-import sleep from "../src/utils/sleep";
-import createUrl from "../src/lib/createUrl";
-import createRetry from "../src/lib/createRetry";
-import { UrlInfo } from "../src";
+import {isJsonString, sleep} from "../src/utils";
+import {createUrl, createRetry} from "../src/lib";
+import { UrlInfo } from "../src/types";
 
 describe("lib & utils Test", () => {
 

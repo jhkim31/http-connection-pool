@@ -2,15 +2,14 @@ import { EventEmitter } from 'node:events';
 import http from 'node:http';
 import https from 'node:https';
 
-import createRetry from '../lib/createRetry';
-import createUrl from '../lib/createUrl';
-import { HcpRequestConfig, HcpResponse, ms } from '../types';
-import Request from './request';
+import { createRetry, createUrl } from '../lib';
+import { HcpRequestConfig, HcpResponse } from '../types';
+import Request, {RequestConfig} from './request';
 
 type Resolve = (value: HcpResponse | PromiseLike<HcpResponse>) => void;
 type Reject = (e: any) => void;
 
-export interface RequestQueueItem {
+interface RequestQueueItem {
   request: Request;
   resolve: Resolve
   reject: Reject;
@@ -152,4 +151,4 @@ export class ConnectionPool {
   }
 }
 
-export {Request};
+export {Request, RequestConfig};
