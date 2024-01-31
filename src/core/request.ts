@@ -4,6 +4,7 @@ import https from 'node:https';
 import { HcpRequestError } from '../error/HcpRequestError';
 import { HTTPMethod, ms, RetryConfig, HcpRequestHeaders, HcpRequestBody, HcpResponse, AfterRetryHook, RetryErrorHandler, BeforeRetryHook } from '../types';
 import { sleep } from '../utils';
+import { HTTPClient } from './httpClient';
 
 /**
  * Constructor parameters of Request class
@@ -41,7 +42,7 @@ export interface RequestConfig {
 /**
  * Class that performs HTTP requests.
  */
-export default class Request {
+export default class Request extends HTTPClient<HcpResponse> {
   /**
    * Setting information received from constructor
    * 
@@ -119,6 +120,7 @@ export default class Request {
   afterRetryHook?: AfterRetryHook;
 
   constructor(config: RequestConfig) {
+    super();
     this.config = config;
     this.retryCount = 0;
     this.maxRetryCount = config.retry?.maxRetryCount ?? 0;

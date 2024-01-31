@@ -4,14 +4,15 @@ import https from 'node:https';
 
 import { createRetry, createUrl } from '../lib';
 import { HcpRequestConfig, HcpResponse } from '../types';
-import Request, {RequestConfig} from './request';
+import Request, { RequestConfig } from './request';
+import ExternalHTTPClient, { RequestFunction } from './externalHttpClient';
 
 type Resolve = (value: HcpResponse | PromiseLike<HcpResponse>) => void;
 type Reject = (e: any) => void;
 
 interface RequestQueueItem {
-  request: Request;
-  resolve: Resolve
+  request: Request | ExternalHTTPClient;
+  resolve: Resolve | any;
   reject: Reject;
 }
 
@@ -72,7 +73,7 @@ export class ConnectionPool {
     this.#events.on('next', () => {
       if (this.currentSize < this.size && this.#requestQueue.length > 0) {
         const requestItem = this.#requestQueue.shift();
-        if (requestItem !== undefined) {
+        if (requestItem?.request instanceof Request) {
           const { request, resolve, reject } = requestItem;
           this.currentSize++;
 
@@ -91,6 +92,7 @@ export class ConnectionPool {
       }
     })
   }
+
 
   /**
    * When a new request comes in, it adds the request to the internal queue and calls the 'next' event.
@@ -118,6 +120,11 @@ export class ConnectionPool {
       } catch (error) {
         reject(error);
       }
+    })
+  }
+
+  addExternalHttpClient<ExternalHttpResponse = any>(fn: RequestFunction, ...args: any) {
+    return new Promise<ExternalHttpResponse>((resolve, reject) => {      
     })
   }
 
@@ -151,4 +158,4 @@ export class ConnectionPool {
   }
 }
 
-export {Request, RequestConfig};
+export { Request, RequestConfig };
