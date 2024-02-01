@@ -1,3 +1,3 @@
-export abstract class HTTPClient<ResponseType> {
-  abstract call(): Promise<ResponseType>;
+export abstract class HttpClient {
+  abstract call(): Promise<any>;
 }

@@ -4,7 +4,7 @@ import https from 'node:https';
 import { HcpRequestError } from '../error/HcpRequestError';
 import { HTTPMethod, ms, RetryConfig, HcpRequestHeaders, HcpRequestBody, HcpResponse, AfterRetryHook, RetryErrorHandler, BeforeRetryHook } from '../types';
 import { sleep } from '../utils';
-import { HTTPClient } from './httpClient';
+import { HttpClient } from './httpClient';
 
 /**
  * Constructor parameters of Request class
@@ -42,7 +42,7 @@ export interface RequestConfig {
 /**
  * Class that performs HTTP requests.
  */
-export default class Request extends HTTPClient<HcpResponse> {
+export default class HcpHttpClient extends HttpClient {
   /**
    * Setting information received from constructor
    * 
@@ -134,7 +134,7 @@ export default class Request extends HTTPClient<HcpResponse> {
     this.headers = config.requestHeaders;
     this.isHttps = this.url.protocol === "https:";
     this.body = config.requestBody;
-    this.transport = this.isHttps ? https : http;
+    this.transport = this.isHttps ? https : http;    
     this.agent = this.isHttps ? (config.httpsAgent ?? new https.Agent({keepAlive: true})) : (config.httpAgent ?? new http.Agent({keepAlive: true}));
   }
 

@@ -4,14 +4,15 @@ import https from 'node:https';
 
 import { createRetry, createUrl } from '../lib';
 import { HcpRequestConfig, HcpResponse } from '../types';
-import Request, { RequestConfig } from './request';
-import ExternalHTTPClient, { RequestFunction } from './externalHttpClient';
+import HcpHttpClient, { RequestConfig } from './hcpHttpClient';
+import ExternalHttpClient, { RequestFunction } from './externalHttpClient';
+import { HttpClient } from './httpClient';
 
 type Resolve = (value: HcpResponse | PromiseLike<HcpResponse>) => void;
 type Reject = (e: any) => void;
 
 interface RequestQueueItem {
-  request: Request | ExternalHTTPClient;
+  request: HttpClient;
   resolve: Resolve | any;
   reject: Reject;
 }
@@ -58,6 +59,8 @@ export class ConnectionPool {
    */
   httpsAgent: https.Agent;
 
+  #status: number;
+
   constructor(size = 10) {
     this.size = size;
     this.#requestQueue = [];
@@ -65,6 +68,7 @@ export class ConnectionPool {
     this.currentSize = 0;
     this.httpAgent = new http.Agent({ keepAlive: true });
     this.httpsAgent = new https.Agent({ keepAlive: true });
+    this.#status = 0;
     /**
      * The 'next' event performs the queued request and calls the 'next' event.
      * 
@@ -73,9 +77,10 @@ export class ConnectionPool {
     this.#events.on('next', () => {
       if (this.currentSize < this.size && this.#requestQueue.length > 0) {
         const requestItem = this.#requestQueue.shift();
-        if (requestItem?.request instanceof Request) {
+        if (requestItem !== undefined) {
           const { request, resolve, reject } = requestItem;
           this.currentSize++;
+          this.#status = 1;
 
           request.call()
             .then(resolve)
@@ -84,6 +89,7 @@ export class ConnectionPool {
               this.currentSize--;
               this.#events.emit('next');
               if (this.currentSize === 0) {
+                this.#status = 0;
                 this.#events.emit("done");
               }
             })
@@ -102,7 +108,7 @@ export class ConnectionPool {
   add(config: HcpRequestConfig): Promise<HcpResponse> {
     return new Promise<HcpResponse>((resolve, reject) => {
       try {
-        const request = new Request({
+        const request = new HcpHttpClient({
           url: createUrl(config.url),
           httpAgent: this.httpAgent,
           httpsAgent: this.httpsAgent,
@@ -124,7 +130,13 @@ export class ConnectionPool {
   }
 
   addExternalHttpClient<ExternalHttpResponse = any>(fn: RequestFunction, ...args: any) {
-    return new Promise<ExternalHttpResponse>((resolve, reject) => {      
+    return new Promise<ExternalHttpResponse>((resolve, reject) => {     
+      this.#requestQueue.push({
+        request: new ExternalHttpClient(fn, ...args),
+        resolve, 
+        reject
+      })
+      this.#events.emit('next');
     })
   }
 
@@ -144,10 +156,10 @@ export class ConnectionPool {
    * If the queue size is 0, Promise is fulfilled immediately.
    */
   done(): Promise<void> {
-    if (this.#requestQueue.length === 0) {
+    if (this.#requestQueue.length === 0 && this.#status === 0) {
       return new Promise<void>((resolve) => {
         resolve();
-      })
+      })     
     } else {
       return new Promise<void>((resolve) => {
         this.#events.once('done', () => {
@@ -158,4 +170,4 @@ export class ConnectionPool {
   }
 }
 
-export { Request, RequestConfig };
+export { HcpHttpClient, RequestConfig };

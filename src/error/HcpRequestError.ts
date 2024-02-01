@@ -1,4 +1,4 @@
-import { RequestConfig } from "../core/request";
+import { RequestConfig } from "../core/hcpHttpClient";
 import http from "node:http";
 
 export class HcpRequestError extends Error {
