@@ -11,8 +11,7 @@ export default class ExternalHttpClient<ExternalHttpResponse = any> extends Http
     this.args = args;
   }
 
-  call(): Promise<ExternalHttpResponse> {
-    console.log(...this.args);
+  call(): Promise<ExternalHttpResponse> {    
     return this.fn(...this.args);
   }
 }

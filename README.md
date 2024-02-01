@@ -7,6 +7,9 @@
   * [CJS (js)](#cjs-js)
   * [ESM (js)](#esm-js)
   * [Typescript](#typescript)  
+* [Use External HTTP Library](#use-external-http-library)
+  * [axios](#axios)
+  * [node-fetch](#node-fetch)
 * [Compare](#compare)
 
 ## Installation
@@ -24,6 +27,12 @@ for (let i = 0; i <= 100_000; i++) {
   connectionPool.add({
     url: "http://localhost:3000/get"
   })
+  .then(d => {
+    console.log(d)
+  })
+  .catch(e => {
+    console.log(e)
+  })
 }
 ```
 
@@ -35,6 +44,12 @@ const connectionPool = new ConnectionPool(1_000);
 for (let i = 0; i <= 100_000; i++) {
   connectionPool.add({
     url: "http://localhost:3000/get"
+  })
+  .then(d => {
+    console.log(d)
+  })
+  .catch(e => {
+    console.log(e)
   })
 }
 ```
@@ -48,8 +63,41 @@ for (let i = 0; i <= 100_000; i++) {
   connectionPool.add({
     url: "http://localhost:3000/get"
   })
+  .then(d => {
+    console.log(d)
+  })
+  .catch(e => {
+    console.log(e)
+  })
 }
 ```
+
+## [Use External HTTP Library](./example/other-agent/)
+### [axios](./example//other-agent/axios.ts);
+```typescript
+import ConnectionPool from "http-connection-pool";
+import axios, { AxiosResponse } from "axios";
+
+const connectionPool = new ConnectionPool(1_000);
+for (let i = 0; i <= 100_000; i++) {
+  connectionPool.addExternalHttpClient<AxiosResponse>(axios.get, `http://localhost:${PORT}/test`)
+    .then(d => console.log(d.data, i));
+}
+```
+
+### [node-fetch](./example//other-agent/node-fetch.ts);
+```typescript
+import ConnectionPool from 'http-connection-pool';
+import fetch, {Response} from "node-fetch";
+
+const connectionPool = new ConnectionPool(1_000);
+for (let i = 0; i <= 100_000; i++) {
+  connectionPool.addExternalHttpClient<Response>(fetch, `http://localhost:${PORT}/test`)
+    .then(d => d.text())
+    .then(d => console.log(d, i));
+}
+```
+
 
 ## Compare
 Compare the execution times of the three methods.
