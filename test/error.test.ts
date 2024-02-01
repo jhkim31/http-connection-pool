@@ -1,4 +1,4 @@
-import Request from '../src/core/request';
+import HcpHttpClient from '../src/core/hcpHttpClient';
 import { HcpRequestError } from '../src/error';
 import app from './server';
 
@@ -16,7 +16,7 @@ describe('Request Module Error Test', () => {
     /**
      * check 404 status code
      */
-    const r = new Request({
+    const r = new HcpHttpClient({
       url: new URL("http://localhost:3001/404"),
       method: "get"
     })
@@ -33,7 +33,7 @@ describe('Request Module Error Test', () => {
     /**
      * When the host is reachable, but the port is not.
      */
-    const r = new Request({
+    const r = new HcpHttpClient({
       url: new URL("http://localhost:9999"),
       method: "get"
     })
@@ -50,7 +50,7 @@ describe('Request Module Error Test', () => {
     /**
      * When the host is unreachable.
      */
-    const r = new Request({
+    const r = new HcpHttpClient({
       url: new URL("https://jcopy.net"),
       method: "get"
     })
@@ -70,7 +70,7 @@ describe('Request Module Error Test', () => {
      */
     let beforeHookCounter = 0;
     let afterHookCounter = 0;
-    const r = new Request({
+    const r = new HcpHttpClient({
       url: new URL("https://jcopy.net"),
       method: "get",
       retry: {

@@ -1,4 +1,4 @@
-import Request from '../src/core/request';
+import HcpHttpClient from '../src/core/hcpHttpClient';
 import app from './server';
 
 describe("Request Module Test", () => {
@@ -19,7 +19,7 @@ describe("Request Module Test", () => {
       res.send('GET');
     })
 
-    const r = new Request({
+    const r = new HcpHttpClient({
       url: new URL("http://localhost:3000/get/string"),
       method: "get",
     })
@@ -37,7 +37,7 @@ describe("Request Module Test", () => {
       res.json({ message: 'GET' });
     })
 
-    const r = new Request({
+    const r = new HcpHttpClient({
       url: new URL("http://localhost:3000/get/json"),
       method: "get",
     })
@@ -55,7 +55,7 @@ describe("Request Module Test", () => {
       res.send('POST');
     })
 
-    const r = new Request({
+    const r = new HcpHttpClient({
       url: new URL("http://localhost:3000/post/string"),
       method: "post"
     })
@@ -73,7 +73,7 @@ describe("Request Module Test", () => {
       res.json({ message: 'POST' });
     })
 
-    const r = new Request({
+    const r = new HcpHttpClient({
       url: new URL("http://localhost:3000/post/json"),
       method: "post",
       requestBody: "test"
@@ -92,7 +92,7 @@ describe("Request Module Test", () => {
       res.send(req.body);
     })
 
-    const r = new Request({
+    const r = new HcpHttpClient({
       url: new URL("http://localhost:3000/post/send/string"),
       method: "post",
       requestBody: "POST"
@@ -111,7 +111,7 @@ describe("Request Module Test", () => {
       res.json(req.body);
     })
 
-    const r = new Request({
+    const r = new HcpHttpClient({
       url: new URL("http://localhost:3000/post/send/json"),
       method: "post",
       requestBody: { "test": 123 }

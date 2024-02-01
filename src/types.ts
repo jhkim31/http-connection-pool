@@ -1,5 +1,5 @@
 import http from "node:http";
-import { RequestConfig } from "./core/request";
+import { RequestConfig } from "./core/hcpHttpClient";
 
 export type HcpRequestHeaders = { [key: string]: string };
 export type HcpRequestBody = string | object;
