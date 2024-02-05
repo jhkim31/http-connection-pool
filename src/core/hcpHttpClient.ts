@@ -1,7 +1,7 @@
 import http from 'node:http';
 import https from 'node:https';
 
-import { ErrorCode, HcpRequestError } from '../error';
+import { HcpErrorCode, HcpError } from '../error';
 import { HTTPMethod, ms, RetryConfig, HcpRequestHeaders, HcpRequestBody, HcpResponse, AfterRetryHook, RetryErrorHandler, BeforeRetryHook, AfterTimeoutHook, TimeoutConfig } from '../types';
 import { sleep } from '../utils';
 import { HttpClient } from './httpClient';
@@ -162,7 +162,7 @@ export default class HcpHttpClient extends HttpClient {
         headers: this.headers
       }, (res) => {
         if (res?.statusCode && res.statusCode >= 400) {
-          reject(new HcpRequestError(`${res.statusMessage} with status code ${res.statusCode}`, ErrorCode.BAD_RESPONSE,  this.config, { req, res, retryCount: this.retryCount }));
+          reject(new HcpError(`${res.statusMessage} with status code ${res.statusCode}`, HcpErrorCode.BAD_RESPONSE, { config: this.config, req, res, retryCount: this.retryCount }));
         } else {
           let body = '';
 
@@ -180,8 +180,8 @@ export default class HcpHttpClient extends HttpClient {
             })
           });   
           
-          res.on('error', (e) => {            
-            reject(new HcpRequestError(e.message, ErrorCode.BAD_RESPONSE, this.config, { req, origin: e, retryCount: this.retryCount }));
+          res.on('error', (error: any) => {            
+            reject(new HcpError(error?.message ?? "Response Error", error?.code ?? HcpErrorCode.BAD_RESPONSE, { config: this.config, req, origin: error, retryCount: this.retryCount }));
           })
         }
       })
@@ -196,14 +196,14 @@ export default class HcpHttpClient extends HttpClient {
         }
       }
 
-      req.on('error', (e) => {
-        reject(new HcpRequestError(e.message, ErrorCode.BAD_REQUEST, this.config, { req, origin: e, retryCount: this.retryCount }));
+      req.on('error', (error: any) => {
+        reject(new HcpError(error?.message ?? 'Unknwon Error', error?.code ?? HcpErrorCode.UNKNOWN_ERROR, {config: this.config, req, origin: error}));
       });
       
       if (this.timeout > 0) {
         req.setTimeout(this.timeout, () => {          
           this.afterTimeoutHook?.(req);
-          req.destroy(new HcpRequestError(`Request Timeout ${this.timeout}ms`, ErrorCode.TIMEOUT, this.config ));
+          req.destroy(new HcpError(`Request Timeout ${this.timeout}ms`, HcpErrorCode.TIMEOUT));
         });
       }
 
@@ -230,7 +230,7 @@ export default class HcpHttpClient extends HttpClient {
           const res = await this.dispatch();
           resolve(res);
           break;
-        } catch (error: unknown) {
+        } catch (error: any) {
           this.retryErrorHandler?.(error);
           lastError = error;
         } finally {

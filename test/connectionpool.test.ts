@@ -1,10 +1,14 @@
-import ConnectionPool from "../src";
+import ConnectionPool, { HTTPMethod, HcpErrorCode } from "../src";
 import app from "./server";
+
+const PORT = 3002;
+const HOST = "localhost";
+const PROTOCOL = "http";
 
 describe("Connection Pool Module Test", () => {
   let server: any;
   beforeAll(() => {
-    server = app.listen(3002);
+    server = app.listen(PORT);
   })
 
   afterAll(() => {
@@ -17,24 +21,15 @@ describe("Connection Pool Module Test", () => {
      * Send 10 requests. /return/:id
      * check all response are correct
      */
-    app.use('/return/:id', (req, res) => {
+    app.get('/return/:id', (req, res) => {
       res.send(req.params.id);
     })
-    const c = new ConnectionPool();
+    const c = new ConnectionPool(10);
 
     for (let i = 0; i < 10; i++) {
       c.add({
-        url: {
-          protocol: "http",
-          host: "localhost",
-          port: 3002,
-          path: `/return/${i}`,
-          urlQuery: {
-            a: 1,
-            b: 2
-          }
-        },
-        method: "get"
+        url: `${PROTOCOL}://${HOST}:${PORT}/return/${i}`,
+        method: HTTPMethod.get
       })
         .then(d => {
           expect(`${d.body}`).toBe(`${i}`);
@@ -48,15 +43,15 @@ describe("Connection Pool Module Test", () => {
      * create URL object with urlQuery in two ways.
      * validate urlQuery
      */
-    app.use('/url/info', (req, res) => {
+    app.get('/url/info', (req, res) => {
       res.json(req.query);
     })
     const c = new ConnectionPool();
     c.add({
       url: {
-        protocol: "http",
-        host: "localhost",
-        port: 3002,
+        protocol: PROTOCOL,
+        host: HOST,
+        port: PORT,
         path: `/url/info`,
         urlQuery: {
           a: "1",
@@ -66,27 +61,28 @@ describe("Connection Pool Module Test", () => {
       method: "get"
     })
       .then(d => {
+        expect(d.config.url.href).toBe(`${PROTOCOL}://${HOST}:${PORT}/url/info?a=1&b=123`);
         expect(JSON.parse(d.body)).toStrictEqual({ a: "1", b: "123" });
       })
 
     c.add({
-      url: "http://localhost:3002/url/info?a=1&b=123",
+      url: `${PROTOCOL}://${HOST}:${PORT}/url/info?a=1&b=123`,
       method: "get"
     })
       .then(d => {
         expect(JSON.parse(d.body)).toStrictEqual({ a: "1", b: "123" });
-      })      
+      })
   });
 
-  test('UrlInfo test (invalid string)', async () => {   
+  test('UrlInfo test (invalid string)', async () => {
     /**
      * promise rejected 
      * port number over the range
      * thrown error has property `code`
-     */ 
+     */
     const c = new ConnectionPool();
     c.add({
-      url: "http://localhost:70000",
+      url: `${PROTOCOL}://${HOST}:70000`,
       method: "get"
     })
       .catch(e => {
@@ -99,17 +95,16 @@ describe("Connection Pool Module Test", () => {
      * Inccur Error 404.
      * 
      * Promise of ConnectionPool.addRequest() are rejected
-     * reason contain retryCount
      * check retryCount
      */
     const c = new ConnectionPool();
 
     c.add({
-      url: "http://localhost:3002/retry",
+      url: `${PROTOCOL}://${HOST}:${PORT}/retry`,
       method: "get",
       retry: 3
     })
-      .catch(e => {
+      .catch(e => {        
         expect(e.retryCount).toBe(3);
       })
     await c.done();
@@ -123,7 +118,7 @@ describe("Connection Pool Module Test", () => {
     const c = new ConnectionPool();
     const st = new Date();
     await c.add({
-      url: "http://localhost:3002/retry",
+      url: `${PROTOCOL}://${HOST}:${PORT}/retry`,
       method: "get",
       retry: {
         retry: 3,
@@ -134,6 +129,27 @@ describe("Connection Pool Module Test", () => {
         const et = new Date();
         expect(et.getTime() - st.getTime()).toBeGreaterThan(3000);
       })
+    await c.done();
+  });
+
+  test('timeout test', async () => {
+    app.get('/timeout', (req, res) => {
+      setTimeout(() => {
+        res.send("OK");
+      }, 10_000)
+    });
+
+    const c = new ConnectionPool();
+
+    c.add({
+      url: `${PROTOCOL}://${HOST}:${PORT}/timeout`,
+      method: HTTPMethod.GET,
+      timeout: 1000      
+    })         
+      .catch(e => {        
+        expect(e.code).toBe(HcpErrorCode.TIMEOUT);
+      })
+
     await c.done();
   });
 })

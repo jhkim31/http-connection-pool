@@ -11,6 +11,15 @@ app.get('/test', (req, res) => {
   }, Math.random() * 100);
 });
 
-app.listen(3000);
+app.get('/timeout', (req, res) => {
+  setTimeout(() => {
+    res.send("OK")
+  }, 10000);
+});
+
+
+if (require.main === module) {
+  app.listen(3000);
+}
 
 export default app;

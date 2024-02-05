@@ -4,9 +4,10 @@ import https from 'node:https';
 
 import { createRetry, createUrl, createTimeout } from '../lib';
 import { HcpRequestConfig, HcpResponse } from '../types';
-import HcpHttpClient, { RequestConfig } from './hcpHttpClient';
+import HcpHttpClient from './hcpHttpClient';
 import ExternalHttpClient, { RequestFunction } from './externalHttpClient';
 import { HttpClient } from './httpClient';
+import { HcpErrorCode, HcpError } from '../error';
 
 type Resolve = (value: HcpResponse | PromiseLike<HcpResponse>) => void;
 type Reject = (e: any) => void;
@@ -107,7 +108,7 @@ export class ConnectionPool {
    */
   add(config: HcpRequestConfig): Promise<HcpResponse> {
     return new Promise<HcpResponse>((resolve, reject) => {
-      try {
+      try {        
         const request = new HcpHttpClient({
           url: createUrl(config.url),
           httpAgent: this.httpAgent,
@@ -124,8 +125,8 @@ export class ConnectionPool {
         });
 
         this.#events.emit('next');
-      } catch (error) {
-        reject(error);
+      } catch (error: any) {   
+        reject(new HcpError(error?.message ?? "Add Request Error", error?.code ?? HcpErrorCode.BAD_REQUEST, {origin: error}));        
       }
     })
   }
@@ -170,5 +171,3 @@ export class ConnectionPool {
     }
   }
 }
-
-export { HcpHttpClient, RequestConfig };

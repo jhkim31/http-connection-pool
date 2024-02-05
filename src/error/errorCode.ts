@@ -1,13 +1,13 @@
-const ErrorCode = {  
+const HcpErrorCode = {  
   TIMEOUT: 'TIMEOUT',
   BAD_REQUEST: "BAD_REQUEST",
   BAD_RESPONSE: 'BAD_RESPONSE',
   UNKNOWN_ERROR: 'UNKNOWN_ERROR'
 } as const;
 
-type ErrorCode = typeof ErrorCode[keyof typeof ErrorCode];
+type HcpErrorCode = typeof HcpErrorCode[keyof typeof HcpErrorCode];
 
-export {ErrorCode};
+export {HcpErrorCode};
 
 
 

@@ -1,5 +1,6 @@
 import HcpHttpClient from '../src/core/hcpHttpClient';
-import { HcpRequestError } from '../src/error';
+import { HcpErrorCode, HcpError } from '../src/error';
+import { HTTPMethod } from '../src/types';
 import app from './server';
 
 describe('Request Module Error Test', () => {
@@ -20,13 +21,14 @@ describe('Request Module Error Test', () => {
       url: new URL("http://localhost:3001/404"),
       method: "get"
     })
-    try {
-      await r.call()
-    } catch (error: unknown) {
-      if (error instanceof HcpRequestError) {
-        expect(error.res?.statusCode).toBe(404);
-      }
-    }
+    await r.call()
+      .then(d => {
+        fail(new Error('expected reject 404, not resolve'))
+      })
+      .catch(e => {
+        expect(e.code).toBe(HcpErrorCode.BAD_RESPONSE);
+        expect(e.res?.statusCode).toBe(404);
+      })
   })
 
   test('Unreachable Destination (port)', async () => {
@@ -35,15 +37,17 @@ describe('Request Module Error Test', () => {
      */
     const r = new HcpHttpClient({
       url: new URL("http://localhost:9999"),
-      method: "get"
+      method: HTTPMethod.GET
     })
-    try {
-      await r.call()
-    } catch (error: unknown) {
-      if (error instanceof HcpRequestError) {                
+
+    await r.call()
+      .then(d => {
+        fail(new Error('expected ECONNREFUSED, not resolve'))
+      })
+      .catch(error => {
+        expect(error.code).toBe("ECONNREFUSED");
         expect(error.message).toMatch(/connect ECONNREFUSED 127.0.0.1:9999|connect ECONNREFUSED ::1:9999/)
-      }
-    }
+      })
   })
 
   test('Unreachable Destination (host)', async () => {
@@ -51,16 +55,18 @@ describe('Request Module Error Test', () => {
      * When the host is unreachable.
      */
     const r = new HcpHttpClient({
-      url: new URL("https://jcopy.net"),
+      url: new URL("https://jcopy2.net"),
       method: "get"
     })
-    try {
-      await r.call()
-    } catch (error: unknown) {
-      if (error instanceof HcpRequestError) {
-        expect(error.message).toBe("getaddrinfo ENOTFOUND jcopy.net");
-      }
-    }
+    await r.call()
+      .then(d => {
+        fail(new Error('expected ENOTFOUND, not resolve'))
+      })
+      .catch(error => {
+        expect(error.code).toBe("ENOTFOUND");
+        expect(error.message).toBe("getaddrinfo ENOTFOUND jcopy2.net");
+      })
+
   })
 
   test('retry test', async () => {
@@ -71,28 +77,26 @@ describe('Request Module Error Test', () => {
     let beforeHookCounter = 0;
     let afterHookCounter = 0;
     const r = new HcpHttpClient({
-      url: new URL("https://jcopy.net"),
+      url: new URL("https://jcopy2.net"),
       method: "get",
       retry: {
         retry: 4,
         hooks: {
           beforeRetryHook: (c) => { beforeHookCounter += c },
           retryErrorHandler: (e) => {
-            if (e instanceof Error) {
-              expect(e.message).toBe("getaddrinfo ENOTFOUND jcopy.net");
-            }
+            expect(e?.message).toBe("getaddrinfo ENOTFOUND jcopy2.net");
           },
           afterRetryHook: (c) => { afterHookCounter += c }
         }
       }
     })
-    try {
-      await r.call()
-    } catch (error: unknown) {
-      if (error instanceof HcpRequestError) {
+    await r.call()
+      .then(d => {        
+        fail(new Error('expected ENOTFOUND, not resolve'))
+      })
+      .catch(error => {        
         expect(beforeHookCounter).toBe(10);
         expect(afterHookCounter).toBe(10);
-      }
-    }
+      })    
   })
 })

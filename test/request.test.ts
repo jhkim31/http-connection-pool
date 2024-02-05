@@ -23,10 +23,11 @@ describe("Request Module Test", () => {
       url: new URL("http://localhost:3003/get/string"),
       method: "get",
     })
-    const res = await r.call();
-
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toStrictEqual('GET');
+    await r.call()
+      .then(d => {
+        expect(d.statusCode).toBe(200);
+        expect(d.body).toStrictEqual('GET');
+      });
   })
 
   test('GET get json', async () => {
@@ -41,10 +42,30 @@ describe("Request Module Test", () => {
       url: new URL("http://localhost:3003/get/json"),
       method: "get",
     })
-    const res = await r.call();
+    await r.call()
+      .then(d => {
+        expect(d.statusCode).toBe(200);
+        expect(JSON.parse(d.body)).toStrictEqual({ message: 'GET' });
+      });
+  })
 
-    expect(res.statusCode).toBe(200);
-    expect(JSON.parse(res.body)).toStrictEqual({ message: 'GET' });
+  test('GET url query', async () => {
+    /**
+     * validate url query
+     */
+    app.get('/get/query', (req, res) => {
+      res.send(req.query);
+    })
+
+    const r = new HcpHttpClient({
+      url: new URL("http://localhost:3003/get/query?a=1"),
+      method: "get",
+    })
+    await r.call()
+      .then(d => {
+        expect(d.statusCode).toBe(200);
+        expect(JSON.parse(d.body)).toStrictEqual({ a: '1' });
+      });
   })
 
   test('POST get string', async () => {
@@ -59,10 +80,11 @@ describe("Request Module Test", () => {
       url: new URL("http://localhost:3003/post/string"),
       method: "post"
     })
-    const res = await r.call();
-
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toStrictEqual('POST');
+    await r.call()
+      .then(d => {
+        expect(d.statusCode).toBe(200);
+        expect(d.body).toStrictEqual('POST');
+      });
   })
 
   test('POST get json', async () => {
@@ -78,10 +100,11 @@ describe("Request Module Test", () => {
       method: "post",
       requestBody: "test"
     })
-    const res = await r.call();
-
-    expect(res.statusCode).toBe(200);
-    expect(JSON.parse(res.body)).toStrictEqual({ message: 'POST' });
+    await r.call()
+      .then(d => {
+        expect(d.statusCode).toBe(200);
+        expect(JSON.parse(d.body)).toStrictEqual({ message: 'POST' });
+      })
   })
 
   test('POST send string', async () => {
@@ -97,10 +120,11 @@ describe("Request Module Test", () => {
       method: "post",
       requestBody: "POST"
     })
-    const res = await r.call();
-
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toStrictEqual("POST");
+    await r.call()
+      .then(d => {
+        expect(d.statusCode).toBe(200);
+        expect(d.body).toStrictEqual("POST");
+      })
   })
 
   test('POST send json', async () => {
@@ -116,9 +140,10 @@ describe("Request Module Test", () => {
       method: "post",
       requestBody: { "test": 123 }
     })
-    const res = await r.call();
-
-    expect(res.statusCode).toBe(200);
-    expect(JSON.parse(res.body)).toStrictEqual({ 'test': 123 });
+    await r.call()
+      .then(d => {
+        expect(d.statusCode).toBe(200);
+        expect(JSON.parse(d.body)).toStrictEqual({ 'test': 123 });
+      })
   })
 });

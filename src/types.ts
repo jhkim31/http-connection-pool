@@ -23,7 +23,7 @@ export type BeforeRetryHook = (retryCount: number) => void;
 /**
  * Executed when error caught.
  */
-export type RetryErrorHandler = (error: unknown) => void;
+export type RetryErrorHandler = (error: any) => void;
 /**
  * Executed after retry.
  */
