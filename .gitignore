@@ -6,3 +6,4 @@
 **/html-report
 package-lock.json
 **/.vscode
+**/local_test

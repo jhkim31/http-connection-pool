@@ -1,4 +1,4 @@
-import { HttpClient as HttpClient } from "./httpClient";
+import { HttpClient } from "./httpClient";
 
 export type RequestFunction<T=any> = (...args: any) => Promise<T>;
 export default class ExternalHttpClient<ExternalHttpResponse = any> extends HttpClient {

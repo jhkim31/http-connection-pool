@@ -7,8 +7,8 @@ import { UrlInfo } from "../types";
  * @param urlInfo {@link UrlInfo}
  * @returns 
  */
-export function createUrl(urlInfo: UrlInfo | string): URL {
-  if (typeof urlInfo === "string") {
+export function createUrl(urlInfo: UrlInfo | string): URL {  
+  if (typeof urlInfo === "string") {    
     return new URL(urlInfo);
   } else {
     let url = urlInfo.protocol + "://";
@@ -22,8 +22,7 @@ export function createUrl(urlInfo: UrlInfo | string): URL {
         url += `${key}=${value}&`;
       }
       url = url.substring(0, url.length - 1);
-    }
-    
+    }    
     return new URL(url);
   }
 }

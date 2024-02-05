@@ -17,5 +17,5 @@ module.exports = {
     '!src/**/index.ts',
     '!src/**/types.ts',    
   ],
-  testMatch: ["**/*.test.ts"],
+  testMatch: ["**/*.test.ts", "**/*.test.mts"],
 };

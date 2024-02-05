@@ -1,10 +1,14 @@
-import ConnectionPool from "http-connection-pool";
+import ConnectionPool, { HTTPMethod } from "http-connection-pool";
 import app from "./server";
+
+const PROTOCOL = "http";
+const PORT = 3010;
+const HOST = "localhost";
 
 describe("Connection Pool Module Test", () => {
   let server: any;
   beforeAll(() => {
-    server = app.listen(3010);
+    server = app.listen(PORT);
   })
 
   afterAll(() => {
@@ -20,23 +24,14 @@ describe("Connection Pool Module Test", () => {
     app.use('/return/:id', (req, res) => {
       res.send(req.params.id);
     })
-    const c = new ConnectionPool();
+    const c = new ConnectionPool(10);
 
     for (let i = 0; i < 10; i++) {
       c.add({
-        url: {
-          protocol: "http",
-          host: "localhost",
-          port: 3010,
-          path: `/return/${i}`,
-          urlQuery: {
-            a: 1,
-            b: 2
-          }
-        },
-        method: "get"
+        url: `${PROTOCOL}://${HOST}:${PORT}/return/${i}`,                  
+        method: HTTPMethod.get
       })
-        .then(d => {
+        .then(d => {          
           expect(`${d.body}`).toBe(`${i}`);
         })
     }
@@ -54,9 +49,9 @@ describe("Connection Pool Module Test", () => {
     const c = new ConnectionPool();
     c.add({
       url: {
-        protocol: "http",
-        host: "localhost",
-        port: 3010,
+        protocol: PROTOCOL,
+        host: HOST,
+        port: PORT,
         path: `/url/info`,
         urlQuery: {
           a: "1",
@@ -65,12 +60,13 @@ describe("Connection Pool Module Test", () => {
       },
       method: "get"
     })
-      .then(d => {
+      .then(d => {        
+        expect(d.config.url.href).toBe(`${PROTOCOL}://${HOST}:${PORT}/url/info?a=1&b=123`);
         expect(JSON.parse(d.body)).toStrictEqual({ a: "1", b: "123" });
       })
 
     c.add({
-      url: "http://localhost:3010/url/info?a=1&b=123",
+      url: `${PROTOCOL}://${HOST}:${PORT}/url/info?a=1&b=123`,
       method: "get"
     })
       .then(d => {
@@ -86,11 +82,11 @@ describe("Connection Pool Module Test", () => {
      */ 
     const c = new ConnectionPool();
     c.add({
-      url: "http://localhost:70000",
+      url: `${PROTOCOL}://${HOST}:70000`,
       method: "get"
     })
       .catch(e => {
-        expect(e.code).toBe("ERR_INVALID_URL");
+        expect(e.code).toBe("ERR_INVALID_URL");        
       })
   });
 
@@ -99,13 +95,12 @@ describe("Connection Pool Module Test", () => {
      * Inccur Error 404.
      * 
      * Promise of ConnectionPool.addRequest() are rejected
-     * reason contain retryCount
      * check retryCount
      */
     const c = new ConnectionPool();
 
     c.add({
-      url: "http://localhost:3010/retry",
+      url: `${PROTOCOL}://${HOST}:${PORT}/retry`,
       method: "get",
       retry: 3
     })
@@ -123,10 +118,10 @@ describe("Connection Pool Module Test", () => {
     const c = new ConnectionPool();
     const st = new Date();
     await c.add({
-      url: "http://localhost:3010/retry",
+      url: `${PROTOCOL}://${HOST}:${PORT}/retry`,
       method: "get",
       retry: {
-        maxRetryCount: 3,
+        retry: 3,
         retryDelay: 1000
       }
     })
