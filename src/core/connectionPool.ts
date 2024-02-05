@@ -2,7 +2,7 @@ import { EventEmitter } from 'node:events';
 import http from 'node:http';
 import https from 'node:https';
 
-import { createRetry, createUrl } from '../lib';
+import { createRetry, createUrl, createTimeout } from '../lib';
 import { HcpRequestConfig, HcpResponse } from '../types';
 import HcpHttpClient, { RequestConfig } from './hcpHttpClient';
 import ExternalHttpClient, { RequestFunction } from './externalHttpClient';
@@ -113,7 +113,8 @@ export class ConnectionPool {
           httpAgent: this.httpAgent,
           httpsAgent: this.httpsAgent,
           method: config.method,
-          retry: createRetry(config.retry)
+          retry: createRetry(config.retry),
+          timeout: createTimeout(config.timeout)
         });
 
         this.#requestQueue.push({

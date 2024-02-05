@@ -1,8 +1,8 @@
 import http from 'node:http';
 import https from 'node:https';
 
-import { HcpRequestError } from '../error/HcpRequestError';
-import { HTTPMethod, ms, RetryConfig, HcpRequestHeaders, HcpRequestBody, HcpResponse, AfterRetryHook, RetryErrorHandler, BeforeRetryHook } from '../types';
+import { ErrorCode, HcpRequestError } from '../error';
+import { HTTPMethod, ms, RetryConfig, HcpRequestHeaders, HcpRequestBody, HcpResponse, AfterRetryHook, RetryErrorHandler, BeforeRetryHook, AfterTimeoutHook, TimeoutConfig } from '../types';
 import { sleep } from '../utils';
 import { HttpClient } from './httpClient';
 
@@ -35,6 +35,7 @@ export interface RequestConfig {
    * Retry Object 
    */
   retry?: RetryConfig;
+  timeout?: TimeoutConfig;
   requestHeaders?: HcpRequestHeaders;
   requestBody?: HcpRequestBody;
 }
@@ -65,6 +66,10 @@ export default class HcpHttpClient extends HttpClient {
    * Delay between each retry ({@link ms ms})
    */
   retryDelay: ms;
+
+  /** */
+  timeout: ms;
+
   /**
    * Target Url Object
    */
@@ -118,19 +123,24 @@ export default class HcpHttpClient extends HttpClient {
    * execute after retry
    */
   afterRetryHook?: AfterRetryHook;
+  /**
+   * 
+   */
+  afterTimeoutHook?: AfterTimeoutHook;
 
   constructor(config: RequestConfig) {
     super();
     this.config = config;
     this.retryCount = 0;
-    this.maxRetryCount = config.retry?.maxRetryCount ?? 0;
+    this.maxRetryCount = config.retry?.retry ?? 0;
     this.retryDelay = config.retry?.retryDelay ?? 0;
+    this.timeout = config.timeout?.timeout ?? 0;
     this.beforeRetryHook = config.retry?.hooks?.beforeRetryHook;
     this.afterRetryHook = config.retry?.hooks?.afterRetryHook;
     this.retryErrorHandler = config.retry?.hooks?.retryErrorHandler;
 
     this.url = config.url;
-    this.method = config.method;
+    this.method = config.method ?? HTTPMethod.GET;
     this.headers = config.requestHeaders;
     this.isHttps = this.url.protocol === "https:";
     this.body = config.requestBody;
@@ -147,12 +157,12 @@ export default class HcpHttpClient extends HttpClient {
   dispatch(): Promise<HcpResponse> {
     return new Promise<HcpResponse>((resolve, reject) => {
       const req = this.transport.request(this.url, {
-        method: this.method ?? "get",
+        method: this.method,
         agent: this.agent,
         headers: this.headers
       }, (res) => {
         if (res?.statusCode && res.statusCode >= 400) {
-          reject(new HcpRequestError(`${res.statusMessage} with status code ${res.statusCode}`, this.config, { req, res, retryCount: this.retryCount }));
+          reject(new HcpRequestError(`${res.statusMessage} with status code ${res.statusCode}`, ErrorCode.BAD_RESPONSE,  this.config, { req, res, retryCount: this.retryCount }));
         } else {
           let body = '';
 
@@ -170,8 +180,8 @@ export default class HcpHttpClient extends HttpClient {
             })
           });   
           
-          res.on('error', (e) => {
-            reject(new HcpRequestError(e.message, this.config, { req, origin: e, retryCount: this.retryCount }));
+          res.on('error', (e) => {            
+            reject(new HcpRequestError(e.message, ErrorCode.BAD_RESPONSE, this.config, { req, origin: e, retryCount: this.retryCount }));
           })
         }
       })
@@ -187,8 +197,15 @@ export default class HcpHttpClient extends HttpClient {
       }
 
       req.on('error', (e) => {
-        reject(new HcpRequestError(e.message, this.config, { req, origin: e, retryCount: this.retryCount }));
-      })
+        reject(new HcpRequestError(e.message, ErrorCode.BAD_REQUEST, this.config, { req, origin: e, retryCount: this.retryCount }));
+      });
+      
+      if (this.timeout > 0) {
+        req.setTimeout(this.timeout, () => {          
+          this.afterTimeoutHook?.(req);
+          req.destroy(new HcpRequestError(`Request Timeout ${this.timeout}ms`, ErrorCode.TIMEOUT, this.config ));
+        });
+      }
 
       req.end();
     })

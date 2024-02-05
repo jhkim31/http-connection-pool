@@ -19,7 +19,7 @@ import { RetryConfig } from '../types';
 
 export function createRetry (retry: undefined | number | RetryConfig): RetryConfig {
   const defaultConfig = {
-    maxRetryCount: 0,
+    retry: 0,
     retryDelay: 0
   }
 
@@ -27,7 +27,7 @@ export function createRetry (retry: undefined | number | RetryConfig): RetryConf
     return defaultConfig;
   } else if (typeof retry === "number") { 
     return {
-      maxRetryCount: retry,
+      retry: retry,
       retryDelay: 0
     }
   } else {    

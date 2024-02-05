@@ -126,7 +126,7 @@ describe("Connection Pool Module Test", () => {
       url: "http://localhost:3010/retry",
       method: "get",
       retry: {
-        maxRetryCount: 3,
+        retry: 3,
         retryDelay: 1000
       }
     })

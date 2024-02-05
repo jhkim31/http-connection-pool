@@ -106,24 +106,24 @@ describe("lib & utils Test", () => {
      * Return Retry Object. when valid parameter
      */
     const retry = createRetry(3);
-    expect(retry.maxRetryCount).toBe(3);
+    expect(retry.retry).toBe(3);
     expect(retry.retryDelay).toBe(0);
 
     const retry2 = createRetry({
-      maxRetryCount: 3
+      retry: 3
     });
-    expect(retry2.maxRetryCount).toBe(3);
+    expect(retry2.retry).toBe(3);
     expect(retry2.retryDelay).toBe(0);
 
     const retry3 = createRetry({
-      maxRetryCount: 3,
+      retry: 3,
       retryDelay: 1000
     });
-    expect(retry3.maxRetryCount).toBe(3);
+    expect(retry3.retry).toBe(3);
     expect(retry3.retryDelay).toBe(1000);
 
     const retry4 = createRetry(undefined);
-    expect(retry4.maxRetryCount).toBe(0);
+    expect(retry4.retry).toBe(0);
     expect(retry4.retryDelay).toBe(0);
   })
 })

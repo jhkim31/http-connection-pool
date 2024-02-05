@@ -40,8 +40,8 @@ describe('Request Module Error Test', () => {
     try {
       await r.call()
     } catch (error: unknown) {
-      if (error instanceof HcpRequestError) {
-        expect(error.message).toBe("connect ECONNREFUSED ::1:9999");
+      if (error instanceof HcpRequestError) {                
+        expect(error.message).toMatch(/connect ECONNREFUSED 127.0.0.1:9999|connect ECONNREFUSED ::1:9999/)
       }
     }
   })
@@ -74,7 +74,7 @@ describe('Request Module Error Test', () => {
       url: new URL("https://jcopy.net"),
       method: "get",
       retry: {
-        maxRetryCount: 4,
+        retry: 4,
         hooks: {
           beforeRetryHook: (c) => { beforeHookCounter += c },
           retryErrorHandler: (e) => {

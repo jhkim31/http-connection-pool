@@ -1,4 +1,4 @@
-import ConnectionPool from "../src/index";
+import ConnectionPool from "../src";
 import app from "./server";
 
 describe("Connection Pool Module Test", () => {
@@ -126,7 +126,7 @@ describe("Connection Pool Module Test", () => {
       url: "http://localhost:3002/retry",
       method: "get",
       retry: {
-        maxRetryCount: 3,
+        retry: 3,
         retryDelay: 1000
       }
     })

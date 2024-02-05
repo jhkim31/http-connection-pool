@@ -4,7 +4,7 @@ import app from './server';
 describe("Request Module Test", () => {
   let server: any;
   beforeAll(() => {
-    server = app.listen(3000)
+    server = app.listen(3003)
   })
 
   afterAll(() => {
@@ -20,7 +20,7 @@ describe("Request Module Test", () => {
     })
 
     const r = new HcpHttpClient({
-      url: new URL("http://localhost:3000/get/string"),
+      url: new URL("http://localhost:3003/get/string"),
       method: "get",
     })
     const res = await r.call();
@@ -38,7 +38,7 @@ describe("Request Module Test", () => {
     })
 
     const r = new HcpHttpClient({
-      url: new URL("http://localhost:3000/get/json"),
+      url: new URL("http://localhost:3003/get/json"),
       method: "get",
     })
     const res = await r.call();
@@ -56,7 +56,7 @@ describe("Request Module Test", () => {
     })
 
     const r = new HcpHttpClient({
-      url: new URL("http://localhost:3000/post/string"),
+      url: new URL("http://localhost:3003/post/string"),
       method: "post"
     })
     const res = await r.call();
@@ -74,7 +74,7 @@ describe("Request Module Test", () => {
     })
 
     const r = new HcpHttpClient({
-      url: new URL("http://localhost:3000/post/json"),
+      url: new URL("http://localhost:3003/post/json"),
       method: "post",
       requestBody: "test"
     })
@@ -93,7 +93,7 @@ describe("Request Module Test", () => {
     })
 
     const r = new HcpHttpClient({
-      url: new URL("http://localhost:3000/post/send/string"),
+      url: new URL("http://localhost:3003/post/send/string"),
       method: "post",
       requestBody: "POST"
     })
@@ -112,7 +112,7 @@ describe("Request Module Test", () => {
     })
 
     const r = new HcpHttpClient({
-      url: new URL("http://localhost:3000/post/send/json"),
+      url: new URL("http://localhost:3003/post/send/json"),
       method: "post",
       requestBody: { "test": 123 }
     })

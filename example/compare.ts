@@ -6,12 +6,6 @@ import app from './server';
 
 const PORT = 3000;
 
-app.get('/test', (req, res) => {
-  setTimeout(() => {
-    res.send("OK")
-  }, Math.random() * 100);
-});
-
 const server = app.listen(PORT);
 const httpAgent = new http.Agent({ keepAlive: true });
 const httpsAgent = new https.Agent({ keepAlive: true });

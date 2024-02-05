@@ -1,6 +1,10 @@
 import http from "node:http";
 import { RequestConfig } from "./core/hcpHttpClient";
 
+export interface HcpConfig {
+  size: number
+}
+
 export type HcpRequestHeaders = { [key: string]: string };
 export type HcpRequestBody = string | object;
 
@@ -25,6 +29,7 @@ export type RetryErrorHandler = (error: unknown) => void;
  */
 export type AfterRetryHook = (retryCount: number) => void;
 
+export type AfterTimeoutHook = (req: http.ClientRequest) => void;
 
 export interface UrlInfo {
   protocol: "http" | "https";
@@ -40,10 +45,11 @@ export interface HcpRequestConfig {
   url: string | UrlInfo;
   method?: HTTPMethod;
   retry?: number | RetryConfig;
+  timeout?: number | TimeoutConfig;
 }
 
 export interface RetryConfig {
-  maxRetryCount: number;
+  retry: number;
   retryDelay?: ms;
   hooks?: {
     beforeRetryHook?: BeforeRetryHook;
@@ -52,13 +58,32 @@ export interface RetryConfig {
   }
 };
 
+export interface TimeoutConfig {
+  timeout: ms;  
+  hooks?: {
+    afterTimeoutHook?: AfterTimeoutHook;    
+  }
+};
+
 export type ms = number;
 
-export type HTTPMethod =
-  | "get"
-  | "post"
-  | "patch"
-  | "put"
-  | "delete"
-  | "options"
-  | "head"
+const HTTPMethod = {
+  get: "get",  
+  GET: "GET",
+  post: "post",
+  POST: "POST",
+  patch: "patch",
+  PATCH: "PATCH",
+  put: "put",
+  PUT: "PUT",
+  delete: "delete",
+  DELETE: "DELETE",
+  options: "options",
+  OPTIONS: "OPTIONS",
+  head: "head",
+  HEAD: "HEAD"  
+} as const;
+
+type HTTPMethod = typeof HTTPMethod[keyof typeof HTTPMethod];
+
+export {HTTPMethod};
