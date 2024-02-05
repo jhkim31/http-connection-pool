@@ -1,7 +1,7 @@
-import HcpHttpClient from '../src/core/hcpHttpClient';
-import app from './server';
+import HcpHttpClient from '../../src/core/hcpHttpClient';
+import app from '../server';
 
-describe("Request Module Test", () => {
+describe("HcpHTTPClient module test", () => {
   let server: any;
   beforeAll(() => {
     server = app.listen(3003)

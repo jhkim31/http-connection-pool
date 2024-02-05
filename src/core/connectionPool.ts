@@ -146,7 +146,7 @@ export class ConnectionPool {
    * Return remaining queue size
    * @returns 
    */
-  getRemainingQueueSize() {
+  getPendingRequestSize() {
     return this.#requestQueue.length;
   }
 

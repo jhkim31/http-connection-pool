@@ -1,8 +1,8 @@
 const HcpErrorCode = {  
-  TIMEOUT: 'TIMEOUT',
-  BAD_REQUEST: "BAD_REQUEST",
-  BAD_RESPONSE: 'BAD_RESPONSE',
-  UNKNOWN_ERROR: 'UNKNOWN_ERROR'
+  TIMEOUT: 'ERR_TIMEOUT',
+  BAD_REQUEST: "ERR_BAD_REQUEST",
+  BAD_RESPONSE: 'ERR_BAD_RESPONSE',
+  UNKNOWN_ERROR: 'ERR_UNKNOWN'
 } as const;
 
 type HcpErrorCode = typeof HcpErrorCode[keyof typeof HcpErrorCode];

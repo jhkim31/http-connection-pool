@@ -1,5 +1,5 @@
-import ConnectionPool, { HTTPMethod, HcpErrorCode } from "../src";
-import app from "./server";
+import ConnectionPool, { HTTPMethod, HcpErrorCode } from "../../src";
+import app from "../server";
 
 const PORT = 3002;
 const HOST = "localhost";
@@ -104,7 +104,7 @@ describe("Connection Pool Module Test", () => {
       method: "get",
       retry: 3
     })
-      .catch(e => {        
+      .catch(e => {
         expect(e.retryCount).toBe(3);
       })
     await c.done();
@@ -144,12 +144,33 @@ describe("Connection Pool Module Test", () => {
     c.add({
       url: `${PROTOCOL}://${HOST}:${PORT}/timeout`,
       method: HTTPMethod.GET,
-      timeout: 1000      
-    })         
-      .catch(e => {        
+      timeout: 1000
+    })
+      .catch(e => {
         expect(e.code).toBe(HcpErrorCode.TIMEOUT);
       })
 
+    await c.done();
+  });
+
+  test('ConnectionPool.getPendingRequestSize test', async () => {
+    /**
+     * When 20 requests are added, 10 are executed immediately, 
+     * but there is a 1000ms delay, 10 requests remain in the queue.
+     */
+    app.get('/delay', (req, res) => {
+      setTimeout(() => {
+        res.send("OK");
+      }, 1000)
+    });
+    const c = new ConnectionPool(10);
+    for (let i = 0; i < 20; i++) {
+      c.add({
+        url: `${PROTOCOL}://${HOST}:${PORT}/delay`,
+        method: HTTPMethod.GET        
+      })
+    }
+    expect(c.getPendingRequestSize()).toBe(10);
     await c.done();
   });
 })

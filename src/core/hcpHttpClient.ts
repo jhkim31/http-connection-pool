@@ -197,7 +197,7 @@ export default class HcpHttpClient extends HttpClient {
       }
 
       req.on('error', (error: any) => {
-        reject(new HcpError(error?.message ?? 'Unknwon Error', error?.code ?? HcpErrorCode.UNKNOWN_ERROR, {config: this.config, req, origin: error}));
+        reject(new HcpError(error?.message ?? 'Unknwon Error', error?.code ?? HcpErrorCode.UNKNOWN_ERROR, {config: this.config, req, origin: error, retryCount: this.retryCount}));
       });
       
       if (this.timeout > 0) {

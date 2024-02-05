@@ -1,9 +1,9 @@
-import HcpHttpClient from '../src/core/hcpHttpClient';
-import { HcpErrorCode, HcpError } from '../src/error';
-import { HTTPMethod } from '../src/types';
-import app from './server';
+import HcpHttpClient from '../../src/core/hcpHttpClient';
+import { HcpErrorCode, HcpError } from '../../src/error';
+import { HTTPMethod } from '../../src/types';
+import app from '../server';
 
-describe('Request Module Error Test', () => {
+describe('HcpHTTPClient Error Test', () => {
   let server: any;
   beforeAll(() => {
     server = app.listen(3001)
@@ -23,7 +23,8 @@ describe('Request Module Error Test', () => {
     })
     await r.call()
       .then(d => {
-        fail(new Error('expected reject 404, not resolve'))
+        // expected reject 404, not resolve
+        expect(true).toBe(false);        
       })
       .catch(e => {
         expect(e.code).toBe(HcpErrorCode.BAD_RESPONSE);
@@ -31,7 +32,7 @@ describe('Request Module Error Test', () => {
       })
   })
 
-  test('Unreachable Destination (port)', async () => {
+  test('Unreachable Destination', async () => {
     /**
      * When the host is reachable, but the port is not.
      */
@@ -42,7 +43,8 @@ describe('Request Module Error Test', () => {
 
     await r.call()
       .then(d => {
-        fail(new Error('expected ECONNREFUSED, not resolve'))
+        // expected ECONNREFUSED, not resolve
+        expect(true).toBe(false);        
       })
       .catch(error => {
         expect(error.code).toBe("ECONNREFUSED");
@@ -50,9 +52,9 @@ describe('Request Module Error Test', () => {
       })
   })
 
-  test('Unreachable Destination (host)', async () => {
+  test('Address not found', async () => {
     /**
-     * When the host is unreachable.
+     * the host is unreachable.
      */
     const r = new HcpHttpClient({
       url: new URL("https://jcopy2.net"),
@@ -60,7 +62,8 @@ describe('Request Module Error Test', () => {
     })
     await r.call()
       .then(d => {
-        fail(new Error('expected ENOTFOUND, not resolve'))
+        // expected ENOTFOUND, not resolve
+        expect(true).toBe(false);        
       })
       .catch(error => {
         expect(error.code).toBe("ENOTFOUND");
@@ -69,7 +72,7 @@ describe('Request Module Error Test', () => {
 
   })
 
-  test('retry test', async () => {
+  test('Retry test', async () => {
     /**
      * Inccur retry, 
      * Check how many times retryHook was actually executed
@@ -91,12 +94,37 @@ describe('Request Module Error Test', () => {
       }
     })
     await r.call()
-      .then(d => {        
-        fail(new Error('expected ENOTFOUND, not resolve'))
+      .then(d => {
+        // expected ENOTFOUND, not resolve
+        expect(true).toBe(false);        
       })
-      .catch(error => {        
+      .catch(error => {
         expect(beforeHookCounter).toBe(10);
         expect(afterHookCounter).toBe(10);
-      })    
+        expect(error.retryCount).toBe(4);
+      })
+  })
+
+  test('Timeout test', async () => {
+    app.get('/timeout', (req, res) => {
+      setTimeout(() => {
+        res.send("OK")
+      }, 10_000)
+    })
+    const r = new HcpHttpClient({
+      url: new URL("http://localhost:3001/timeout"),
+      method: "get",
+      timeout: {
+        timeout: 1000
+      }
+    })
+    await r.call()
+      .then(d => {
+        // expected TIMEOUT, not resolve
+        expect(true).toBe(false);
+      })
+      .catch(error => {        
+        expect(error.code).toBe(HcpErrorCode.TIMEOUT);
+      })
   })
 })

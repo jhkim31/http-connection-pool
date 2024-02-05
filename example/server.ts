@@ -5,6 +5,10 @@ const app = express();
 app.use(express.text());    
 app.use(express.json());    
 
+app.post("/post", (req, res) => {
+  res.send(req.body);
+})
+
 app.get('/test', (req, res) => {
   setTimeout(() => {
     res.send("OK")
