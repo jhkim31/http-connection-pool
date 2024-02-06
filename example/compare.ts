@@ -1,4 +1,5 @@
-import ConnectionPool, { HcpHttpClient } from 'http-connection-pool';
+import ConnectionPool from 'http-connection-pool';
+import HcpHttpClient from "../src/core/hcpHttpClient";
 import app from './server';
 
 const PORT = 3000;

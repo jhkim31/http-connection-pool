@@ -106,6 +106,7 @@ Compare the execution times of the three methods.
 3. ConnectionPool (size 100)
 
 Send 10,000 HTTP requests to a test server that transmits results after a random delay time.
+[./example/compare.ts](./example/compare.ts)
 ```javascript
 get('/test', (req, res) => {
   setTimeout(() => {
@@ -113,9 +114,6 @@ get('/test', (req, res) => {
   }, Math.random() * 100);
 });
 ```
-
-[./example/compare.ts](./example/compare.ts)
-
 ```bash
 test 1 serial request
 test 1 : 517066ms
