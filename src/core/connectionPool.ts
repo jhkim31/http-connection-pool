@@ -70,14 +70,13 @@ export class ConnectionPool {
   #status: HcpStatus;
 
   /**
-   * default size 10
-   * Recomended to use {@link HcpConfig}
+   * * default size 10
+   * * Recomended to use {@link HcpConfig}
    */
   constructor();
   /**
-   * @deprecated `ConnectionPool(size: number)` is depracated and no longer supported.
    * 
-   * Use {@link HcpConfig}
+   * Recomended to use {@link HcpConfig}
    */
   constructor(size: number);
   /**
@@ -88,8 +87,7 @@ export class ConnectionPool {
   constructor(config?: HcpConfig | number) {
     if (typeof config === "undefined") {      
       this.size = 10;
-    } else if (typeof config === "number") {
-      console.warn(`Warning: ConnectionPool(size: number) is depracated and no longer supported from the next major version. \nPlease use HcpConfig instead.`)
+    } else if (typeof config === "number") {      
       this.size = config;
     } else {
       this.size = config.size;
