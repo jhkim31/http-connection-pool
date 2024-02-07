@@ -1,7 +1,11 @@
 # http-connection-pool
-**http-connection-pool** quickly processes many HTTP requests in concurrency that cannot be processed at once like a **thread-pool**.
+| [npm](https://www.npmjs.com/package/http-connection-pool) | 
+
+**http-connection-pool** quickly performs many HTTP requests in concurrently that cannot be processed at once. Like a **thread-pool**.
+
 
 ## Table of contents
+* [Docs](#docs)
 * [Installation](#installation)
 * [Usage](#usage)
   * [CJS (js)](#cjs-js)
@@ -11,6 +15,11 @@
   * [axios](#axios)
   * [node-fetch](#node-fetch)
 * [Compare](#compare)
+
+## Docs
+* [Getting Started](./docs/1-GettingStarted.md)
+* [API](./docs/2-API.md)
+* [Types](./docs/3-Types.md)
 
 ## Installation
 ```bash
@@ -22,7 +31,7 @@ npm install http-connection-pool
 ```javascript
 const { ConnectionPool } = require("http-connection-pool");
 
-const connectionPool = new ConnectionPool(1_000);
+const connectionPool = new ConnectionPool({size: 1000});
 for (let i = 0; i <= 100_000; i++) {
   connectionPool.add({
     url: "http://localhost:3000/get"
@@ -40,7 +49,7 @@ for (let i = 0; i <= 100_000; i++) {
 ```javascript
 import ConnectionPool from "http-connection-pool";
 
-const connectionPool = new ConnectionPool(1_000);
+const connectionPool = new ConnectionPool({size: 1000});
 for (let i = 0; i <= 100_000; i++) {
   connectionPool.add({
     url: "http://localhost:3000/get"
@@ -58,7 +67,7 @@ for (let i = 0; i <= 100_000; i++) {
 ```typescript
 import ConnectionPool from "http-connection-pool";
 
-const connectionPool = new ConnectionPool(1_000);
+const connectionPool = new ConnectionPool({size: 1000});
 for (let i = 0; i <= 100_000; i++) {
   connectionPool.add({
     url: "http://localhost:3000/get"
@@ -78,7 +87,7 @@ for (let i = 0; i <= 100_000; i++) {
 import ConnectionPool from "http-connection-pool";
 import axios, { AxiosResponse } from "axios";
 
-const connectionPool = new ConnectionPool(1_000);
+const connectionPool = new ConnectionPool({size: 1000});
 for (let i = 0; i <= 100_000; i++) {
   connectionPool.addExternalHttpClient<AxiosResponse>(axios.get, `http://localhost:${PORT}/test`)
     .then(d => console.log(d.data, i));
@@ -90,7 +99,7 @@ for (let i = 0; i <= 100_000; i++) {
 import ConnectionPool from 'http-connection-pool';
 import fetch, {Response} from "node-fetch";
 
-const connectionPool = new ConnectionPool(1_000);
+const connectionPool = new ConnectionPool({size: 1000});
 for (let i = 0; i <= 100_000; i++) {
   connectionPool.addExternalHttpClient<Response>(fetch, `http://localhost:${PORT}/test`)
     .then(d => d.text())
@@ -106,6 +115,7 @@ Compare the execution times of the three methods.
 3. ConnectionPool (size 100)
 
 Send 10,000 HTTP requests to a test server that transmits results after a random delay time.
+[./example/compare.ts](./example/compare.ts)
 ```javascript
 get('/test', (req, res) => {
   setTimeout(() => {
@@ -113,9 +123,6 @@ get('/test', (req, res) => {
   }, Math.random() * 100);
 });
 ```
-
-[./example/compare.ts](./example/compare.ts)
-
 ```bash
 test 1 serial request
 test 1 : 517066ms

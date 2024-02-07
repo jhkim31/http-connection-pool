@@ -1,11 +1,11 @@
-import ConnectionPool, { HTTPMethod } from "http-connection-pool";
+import ConnectionPool, { HTTPMethod, HcpErrorCode } from "http-connection-pool";
 import app from "./server";
 
 const PROTOCOL = "http";
 const PORT = 3010;
 const HOST = "localhost";
 
-describe("Connection Pool Module Test", () => {
+describe("Module bundle test", () => {
   let server: any;
   beforeAll(() => {
     server = app.listen(PORT);
@@ -21,17 +21,17 @@ describe("Connection Pool Module Test", () => {
      * Send 10 requests. /return/:id
      * check all response are correct
      */
-    app.use('/return/:id', (req, res) => {
+    app.get('/return/:id', (req, res) => {
       res.send(req.params.id);
     })
-    const c = new ConnectionPool(10);
+    const c = new ConnectionPool();
 
     for (let i = 0; i < 10; i++) {
       c.add({
-        url: `${PROTOCOL}://${HOST}:${PORT}/return/${i}`,                  
+        url: `${PROTOCOL}://${HOST}:${PORT}/return/${i}`,
         method: HTTPMethod.get
       })
-        .then(d => {          
+        .then(d => {
           expect(`${d.body}`).toBe(`${i}`);
         })
     }
@@ -43,7 +43,7 @@ describe("Connection Pool Module Test", () => {
      * create URL object with urlQuery in two ways.
      * validate urlQuery
      */
-    app.use('/url/info', (req, res) => {
+    app.get('/url/info', (req, res) => {
       res.json(req.query);
     })
     const c = new ConnectionPool();
@@ -60,7 +60,7 @@ describe("Connection Pool Module Test", () => {
       },
       method: "get"
     })
-      .then(d => {        
+      .then(d => {
         expect(d.config.url.href).toBe(`${PROTOCOL}://${HOST}:${PORT}/url/info?a=1&b=123`);
         expect(JSON.parse(d.body)).toStrictEqual({ a: "1", b: "123" });
       })
@@ -71,22 +71,22 @@ describe("Connection Pool Module Test", () => {
     })
       .then(d => {
         expect(JSON.parse(d.body)).toStrictEqual({ a: "1", b: "123" });
-      })      
+      })
   });
 
-  test('UrlInfo test (invalid string)', async () => {   
+  test('UrlInfo test (invalid string)', async () => {
     /**
      * promise rejected 
      * port number over the range
      * thrown error has property `code`
-     */ 
+     */
     const c = new ConnectionPool();
     c.add({
       url: `${PROTOCOL}://${HOST}:70000`,
       method: "get"
     })
       .catch(e => {
-        expect(e.code).toBe("ERR_INVALID_URL");        
+        expect(e.code).toBe("ERR_INVALID_URL");
       })
   });
 
@@ -129,6 +129,158 @@ describe("Connection Pool Module Test", () => {
         const et = new Date();
         expect(et.getTime() - st.getTime()).toBeGreaterThan(3000);
       })
+    await c.done();
+  });
+
+  test('timeout test', async () => {
+    app.get('/timeout', (req, res) => {
+      setTimeout(() => {
+        res.send("OK");
+      }, 10_000)
+    });
+
+    const c = new ConnectionPool();
+
+    c.add({
+      url: `${PROTOCOL}://${HOST}:${PORT}/timeout`,
+      method: HTTPMethod.GET,
+      timeout: 1000
+    })
+      .catch(e => {
+        expect(e.code).toBe(HcpErrorCode.TIMEOUT);
+      })
+
+    await c.done();
+  });
+
+  test('ConnectionPool.getPendingRequestSize test', async () => {
+    /**
+     * When 20 requests are added, 10 are executed immediately, 
+     * but there is a 1000ms delay, 10 requests remain in the queue.
+     */
+    app.get('/delay', (req, res) => {
+      setTimeout(() => {
+        res.send("OK");
+      }, 1000)
+    });
+    const c = new ConnectionPool();
+    for (let i = 0; i < 20; i++) {
+      c.add({
+        url: `${PROTOCOL}://${HOST}:${PORT}/delay`,
+        method: HTTPMethod.GET
+      })
+    }
+    expect(c.getPendingRequestSize()).toBe(10);
+    await c.done();
+  });
+
+  test('GET get string test', async () => {
+    app.get('/get/string', (req, res) => {
+      res.send('GET');
+    })
+    const c = new ConnectionPool({ size: 10 });
+
+    for (let i = 0; i < 100; i++) {
+      c.add({
+        url: `${PROTOCOL}://${HOST}:${PORT}/get/string`
+      })
+        .then(d => {
+          expect(d.body).toBe("GET");
+        })
+    }
+    await c.done();
+  });
+
+  test('GET get json test', async () => {
+    app.get('/get/json', (req, res) => {
+      res.json({ test: "GET" });
+    })
+    const c = new ConnectionPool({ size: 10 });
+
+    for (let i = 0; i < 100; i++) {
+      c.add({
+        url: `${PROTOCOL}://${HOST}:${PORT}/get/json`
+      })
+        .then(d => {
+          expect(JSON.parse(d.body)).toEqual({test: "GET"});
+        })
+    }
+    await c.done();
+  });
+
+  test('POST get string test', async () => {
+    app.post('/get/string', (req, res) => {
+      res.send('POST');
+    })
+
+    const c = new ConnectionPool({ size: 10 });
+
+    for (let i = 0; i < 100; i++) {
+      c.add({
+        url: `${PROTOCOL}://${HOST}:${PORT}/get/string`,
+        method: HTTPMethod.POST
+      })
+        .then(d => {
+          expect(d.body).toBe("POST");
+        })
+    }
+    await c.done();
+  });
+
+  test('POST get json test', async () => {
+    app.post('/get/json', (req, res) => {
+      res.json({ test: "POST" });
+    });
+    const c = new ConnectionPool({ size: 10 });
+
+    for (let i = 0; i < 100; i++) {
+      c.add({
+        url: `${PROTOCOL}://${HOST}:${PORT}/get/json`,
+        method: "POST"
+      })
+        .then(d => {
+          expect(JSON.parse(d.body)).toEqual({test: "POST"});
+        })
+    }
+    await c.done();
+  });
+
+  test('POST send string test', async () => {
+    app.post('/post/string', (req, res) => {
+      res.send(req.body);
+    });
+
+    const c = new ConnectionPool({ size: 10 });
+
+    for (let i = 0; i < 100; i++) {
+      c.add({
+        url: `${PROTOCOL}://${HOST}:${PORT}/post/string`,
+        method: HTTPMethod.POST,
+        body: "POST"
+      })
+        .then(d => {
+          expect(d.body).toBe("POST");
+        })
+    }
+    await c.done();
+  });
+
+  test('POST send json test', async () => {
+    app.post('/post/json', (req, res) => {
+      res.send(req.body);
+    })
+    const c = new ConnectionPool({ size: 10 });
+
+    for (let i = 0; i < 100; i++) {
+      c.add({
+        url: `${PROTOCOL}://${HOST}:${PORT}/post/json`,
+        method: HTTPMethod.POST,
+        body: {test: "POST"}
+      })
+        .then(d => {
+          expect(JSON.parse(d.body)).toEqual({test: "POST"});
+        })
+    }
     await c.done();
   });
 })

@@ -3,7 +3,7 @@ import http from 'node:http';
 import https from 'node:https';
 
 import { createRetry, createUrl, createTimeout } from '../lib';
-import { HcpRequestConfig, HcpResponse } from '../types';
+import { HcpRequestConfig, HcpResponse, HcpConfig } from '../types';
 import HcpHttpClient from './hcpHttpClient';
 import ExternalHttpClient, { RequestFunction } from './externalHttpClient';
 import { HttpClient } from './httpClient';
@@ -11,6 +11,13 @@ import { HcpErrorCode, HcpError } from '../error';
 
 type Resolve = (value: HcpResponse | PromiseLike<HcpResponse>) => void;
 type Reject = (e: any) => void;
+
+const HCPStatus = {
+  IDLE: 'IDLE',
+  BUSY: 'BUSY'
+} as const;
+
+type HcpStatus = typeof HCPStatus[keyof typeof HCPStatus];
 
 interface RequestQueueItem {
   request: HttpClient;
@@ -33,7 +40,7 @@ export class ConnectionPool {
    * 
    * Additional requests are added to this queue, and requests are performed on a first-in-first-out basis.
    */
-  #requestQueue: RequestQueueItem[];
+#requestQueue: RequestQueueItem[];
   /**
    * Limit the number of requests that can be performed simultaneously.
    * 
@@ -54,22 +61,50 @@ export class ConnectionPool {
   /**
    * To use the same httpAgent in many Request instances
    */
-  httpAgent: http.Agent;
+  #httpAgent: http.Agent;
   /**
    * To use the same httpsAgent in many Request instances
    */
-  httpsAgent: https.Agent;
+  #httpsAgent: https.Agent;
 
-  #status: number;
+  #status: HcpStatus;
 
-  constructor(size = 10) {
-    this.size = size;
+  /**
+   * * default size 10
+   * * Recomended to use {@link HcpConfig}
+   */
+  constructor();
+  /**
+   * 
+   * Recomended to use {@link HcpConfig}
+   */
+  constructor(size: number);
+  /**
+   * 
+   * @param config {@link HcpConfig}
+   */
+  constructor(config: HcpConfig);
+  constructor(config?: HcpConfig | number) {
+    if (typeof config === "undefined") {      
+      this.size = 10;
+    } else if (typeof config === "number") {     
+      if (config <= 0 || !Number.isInteger(config)) {
+        throw new HcpError(`Size must be positive Integer. Received ${config}`, HcpErrorCode.TYPE_ERROR);
+      } 
+      this.size = config;
+    } else {
+      if (config.size <= 0 || !Number.isInteger(config)) {
+        throw new HcpError(`Size must be positive Integer. Received ${config}`, HcpErrorCode.TYPE_ERROR);
+      } 
+      this.size = config.size;
+    }
+    
     this.#requestQueue = [];
     this.#events = new EventEmitter();
     this.currentSize = 0;
-    this.httpAgent = new http.Agent({ keepAlive: true });
-    this.httpsAgent = new https.Agent({ keepAlive: true });
-    this.#status = 0;
+    this.#httpAgent = new http.Agent({ keepAlive: true });
+    this.#httpsAgent = new https.Agent({ keepAlive: true });
+    this.#status = HCPStatus.IDLE;
     /**
      * The 'next' event performs the queued request and calls the 'next' event.
      * 
@@ -81,7 +116,7 @@ export class ConnectionPool {
         if (requestItem !== undefined) {
           const { request, resolve, reject } = requestItem;
           this.currentSize++;
-          this.#status = 1;
+          this.#status = HCPStatus.BUSY;
 
           request.call()
             .then(resolve)
@@ -90,7 +125,7 @@ export class ConnectionPool {
               this.currentSize--;
               this.#events.emit('next');
               if (this.currentSize === 0) {
-                this.#status = 0;
+                this.#status = HCPStatus.IDLE;
                 this.#events.emit("done");
               }
             })
@@ -103,19 +138,21 @@ export class ConnectionPool {
 
   /**
    * When a new request comes in, it adds the request to the internal queue and calls the 'next' event.
-   * @param config 
+   * @param requestConfig 
    * @returns 
    */
-  add(config: HcpRequestConfig): Promise<HcpResponse> {
+  add(requestConfig: HcpRequestConfig): Promise<HcpResponse> {
     return new Promise<HcpResponse>((resolve, reject) => {
       try {        
         const request = new HcpHttpClient({
-          url: createUrl(config.url),
-          httpAgent: this.httpAgent,
-          httpsAgent: this.httpsAgent,
-          method: config.method,
-          retry: createRetry(config.retry),
-          timeout: createTimeout(config.timeout)
+          url: createUrl(requestConfig.url),
+          requestHeaders: requestConfig.headers,
+          requestBody: requestConfig.body,
+          httpAgent: this.#httpAgent,
+          httpsAgent: this.#httpsAgent,
+          method: requestConfig.method,
+          retry: createRetry(requestConfig.retry),
+          timeout: createTimeout(requestConfig.timeout)
         });
 
         this.#requestQueue.push({
@@ -146,7 +183,7 @@ export class ConnectionPool {
    * Return remaining queue size
    * @returns 
    */
-  getPendingRequestSize() {
+  getPendingRequestSize(): number {
     return this.#requestQueue.length;
   }
 
@@ -158,7 +195,7 @@ export class ConnectionPool {
    * If the queue size is 0, Promise is fulfilled immediately.
    */
   done(): Promise<void> {
-    if (this.#requestQueue.length === 0 && this.#status === 0) {
+    if (this.#requestQueue.length === 0 && this.#status === HCPStatus.IDLE) {
       return new Promise<void>((resolve) => {
         resolve();
       })     

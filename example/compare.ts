@@ -1,4 +1,5 @@
-import ConnectionPool, { HcpHttpClient } from 'http-connection-pool';
+import ConnectionPool from 'http-connection-pool';
+import HcpHttpClient from "../src/core/hcpHttpClient";
 import app from './server';
 
 const PORT = 3000;
@@ -36,7 +37,7 @@ const server = app.listen(PORT);
 
   console.log("test 3 connection pool");
   const st3 = new Date();
-  const connectionPool = new ConnectionPool(100);
+  const connectionPool = new ConnectionPool({size: 100});
   for (let i = 0; i < 10000; i++) {
     connectionPool.add({
       url: `http://localhost:${PORT}/test`

@@ -173,7 +173,7 @@ export default class HcpHttpClient extends HttpClient {
           res.on('end', () => {
             resolve({
               statusCode: res.statusCode,
-              statusMessage: res.statusMessage,
+              statusMessage: res.statusMessage,              
               headers: res.headers,
               body: body,
               config: this.config,
@@ -187,11 +187,15 @@ export default class HcpHttpClient extends HttpClient {
       })
 
       if (this.body) {
-        if (typeof this.body == "string") {
-          req.setHeader('Content-Type', 'text/plain');
+        if (typeof this.body == "string") {          
+          if (req.getHeader("Content-Type") !== "text/plain") {
+            req.setHeader('Content-Type', 'text/plain');
+          }          
           req.write(this.body);
         } else {
-          req.setHeader('Content-Type', 'application/json');
+          if (req.getHeader("Content-Type") !== "application/json") {            
+            req.setHeader('Content-Type', 'application/json');
+          }          
           req.write(JSON.stringify(this.body));
         }
       }

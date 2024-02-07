@@ -22,7 +22,7 @@ describe('superagent Error Test', () => {
       res.send("OK");
     })
 
-    const c = new ConnectionPool(10);
+    const c = new ConnectionPool();
 
     await c.addExternalHttpClient<Response>(superagent.get, `${PROTOCOL}://${HOST}:${PORT}/get/string`)
       .then(d => {
@@ -35,7 +35,7 @@ describe('superagent Error Test', () => {
       res.send({test : "OK"});
     })
 
-    const c = new ConnectionPool(10);
+    const c = new ConnectionPool();
 
     await c.addExternalHttpClient<Response>(superagent.get, `${PROTOCOL}://${HOST}:${PORT}/get/json`)
       .then(d => {
