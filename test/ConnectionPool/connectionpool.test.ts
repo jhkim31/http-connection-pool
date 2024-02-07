@@ -24,7 +24,7 @@ describe("Connection Pool Module Test", () => {
     app.get('/return/:id', (req, res) => {
       res.send(req.params.id);
     })
-    const c = new ConnectionPool(10);
+    const c = new ConnectionPool();
 
     for (let i = 0; i < 10; i++) {
       c.add({
@@ -163,14 +163,146 @@ describe("Connection Pool Module Test", () => {
         res.send("OK");
       }, 1000)
     });
-    const c = new ConnectionPool(10);
+    const c = new ConnectionPool();
     for (let i = 0; i < 20; i++) {
       c.add({
         url: `${PROTOCOL}://${HOST}:${PORT}/delay`,
-        method: HTTPMethod.GET        
+        method: HTTPMethod.GET
       })
     }
     expect(c.getPendingRequestSize()).toBe(10);
+    await c.done();
+  });
+
+  test('GET get string test', async () => {
+    app.get('/get/string', (req, res) => {
+      res.send('GET');
+    })
+    const c = new ConnectionPool({ size: 10 });
+
+    for (let i = 0; i < 100; i++) {
+      c.add({
+        url: `${PROTOCOL}://${HOST}:${PORT}/get/string`
+      })
+        .then(d => {
+          expect(d.body).toBe("GET");
+        })
+    }
+    await c.done();
+  });
+
+  test('GET get json test', async () => {
+    app.get('/get/json', (req, res) => {
+      res.json({ test: "GET" });
+    })
+    const c = new ConnectionPool({ size: 10 });
+
+    for (let i = 0; i < 100; i++) {
+      c.add({
+        url: `${PROTOCOL}://${HOST}:${PORT}/get/json`
+      })
+        .then(d => {
+          expect(JSON.parse(d.body)).toEqual({ test: "GET" });
+        })
+    }
+    await c.done();
+  });
+
+  test('POST get string test', async () => {
+    app.post('/get/string', (req, res) => {
+      res.send('POST');
+    })
+
+    const c = new ConnectionPool({ size: 10 });
+
+    for (let i = 0; i < 100; i++) {
+      c.add({
+        url: `${PROTOCOL}://${HOST}:${PORT}/get/string`,
+        method: HTTPMethod.POST
+      })
+        .then(d => {
+          expect(d.body).toBe("POST");
+        })
+    }
+    await c.done();
+  });
+
+  test('POST get json test', async () => {
+    app.post('/get/json', (req, res) => {
+      res.json({ test: "POST" });
+    });
+    const c = new ConnectionPool({ size: 10 });
+
+    for (let i = 0; i < 100; i++) {
+      c.add({
+        url: `${PROTOCOL}://${HOST}:${PORT}/get/json`,
+        method: "POST"
+      })
+        .then(d => {
+          expect(JSON.parse(d.body)).toEqual({ test: "POST" });
+        })
+    }
+    await c.done();
+  });
+
+  test('POST send string test', async () => {
+    app.post('/post/string', (req, res) => {
+      res.send(req.body);
+    });
+
+    const c = new ConnectionPool({ size: 10 });
+
+    for (let i = 0; i < 100; i++) {
+      c.add({
+        url: `${PROTOCOL}://${HOST}:${PORT}/post/string`,
+        method: HTTPMethod.POST,
+        body: "POST"
+      })
+        .then(d => {
+          expect(d.body).toBe("POST");
+        })
+    }
+    await c.done();
+  });
+
+  test('POST send json test', async () => {
+    app.post('/post/json', (req, res) => {
+      res.send(req.body);
+    })
+    const c = new ConnectionPool({ size: 10 });
+
+    for (let i = 0; i < 100; i++) {
+      c.add({
+        url: `${PROTOCOL}://${HOST}:${PORT}/post/json`,
+        method: HTTPMethod.POST,
+        body: { test: "POST" }
+      })
+        .then(d => {
+          expect(JSON.parse(d.body)).toEqual({ test: "POST" });
+        })
+    }
+    await c.done();
+  });
+
+  test('Set headers', async () => {
+    app.get('/headers', (req, res) => {
+      res.json(req.headers);
+    })
+
+    const c = new ConnectionPool({ size: 10 });
+
+    for (let i = 0; i < 100; i++) {
+      c.add({
+        url: `${PROTOCOL}://${HOST}:${PORT}/headers`,
+        headers: {
+          "Test-Header": "TestHeader"
+        }
+      })
+        .then(d => {
+          expect(d.statusCode).toBe(200);
+          expect(JSON.parse(d.body)).toHaveProperty("test-header", "TestHeader");
+        })
+    }
     await c.done();
   });
 })

@@ -22,7 +22,7 @@ describe('Axios Error Test', () => {
       res.send("OK");
     })
 
-    const c = new ConnectionPool(10);
+    const c = new ConnectionPool();
 
     await c.addExternalHttpClient<AxiosResponse>(axios.get, `${PROTOCOL}://${HOST}:${PORT}/get/string`, { timeout: 1000 })
       .then(d => {
@@ -35,7 +35,7 @@ describe('Axios Error Test', () => {
       res.send({ test: "OK" });
     })
 
-    const c = new ConnectionPool(10);
+    const c = new ConnectionPool();
 
     await c.addExternalHttpClient<AxiosResponse>(axios.get, `${PROTOCOL}://${HOST}:${PORT}/get/json`, { timeout: 1000 })
       .then(d => {
@@ -48,7 +48,7 @@ describe('Axios Error Test', () => {
       res.send(req.body);
     })
 
-    const c = new ConnectionPool(10);
+    const c = new ConnectionPool();
 
     await c.addExternalHttpClient<AxiosResponse>(axios.post, `${PROTOCOL}://${HOST}:${PORT}/post/string`, "OK", {
       headers: {
@@ -66,7 +66,7 @@ describe('Axios Error Test', () => {
       res.send(req.body);
     })
 
-    const c = new ConnectionPool(10);
+    const c = new ConnectionPool();
 
     await c.addExternalHttpClient<AxiosResponse>(axios.post, `${PROTOCOL}://${HOST}:${PORT}/post/json`, { test: "OK" }, { timeout: 1000 })
       .then(d => {
@@ -81,7 +81,7 @@ describe('Axios Error Test', () => {
       }, 10000)
     })
 
-    const c = new ConnectionPool(10);
+    const c = new ConnectionPool();
 
     await c.addExternalHttpClient<AxiosResponse>(axios.get, `${PROTOCOL}://${HOST}:${PORT}/timeout`, { timeout: 1000 })
       .catch(error => {

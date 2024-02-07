@@ -146,4 +146,25 @@ describe("HcpHTTPClient module test", () => {
         expect(JSON.parse(d.body)).toStrictEqual({ 'test': 123 });
       })
   })
+
+  test('Set headers', async () => {
+    app.get('/headers', (req, res) => {                  
+      res.json(req.headers);
+    })
+
+    const r = new HcpHttpClient({
+      url: new URL("http://localhost:3003/headers"),      
+      requestHeaders: {
+        "Test-Header": "TestHeader"
+      },
+      requestBody: {
+        "a" : 123
+      }
+    })
+    await r.call()
+      .then(d => {
+        expect(d.statusCode).toBe(200);        
+        expect(JSON.parse(d.body)).toHaveProperty("test-header", "TestHeader");
+      })
+  });
 });

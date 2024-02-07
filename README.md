@@ -31,7 +31,7 @@ npm install http-connection-pool
 ```javascript
 const { ConnectionPool } = require("http-connection-pool");
 
-const connectionPool = new ConnectionPool(1_000);
+const connectionPool = new ConnectionPool({size: 1000});
 for (let i = 0; i <= 100_000; i++) {
   connectionPool.add({
     url: "http://localhost:3000/get"
@@ -49,7 +49,7 @@ for (let i = 0; i <= 100_000; i++) {
 ```javascript
 import ConnectionPool from "http-connection-pool";
 
-const connectionPool = new ConnectionPool(1_000);
+const connectionPool = new ConnectionPool({size: 1000});
 for (let i = 0; i <= 100_000; i++) {
   connectionPool.add({
     url: "http://localhost:3000/get"
@@ -67,7 +67,7 @@ for (let i = 0; i <= 100_000; i++) {
 ```typescript
 import ConnectionPool from "http-connection-pool";
 
-const connectionPool = new ConnectionPool(1_000);
+const connectionPool = new ConnectionPool({size: 1000});
 for (let i = 0; i <= 100_000; i++) {
   connectionPool.add({
     url: "http://localhost:3000/get"
@@ -87,7 +87,7 @@ for (let i = 0; i <= 100_000; i++) {
 import ConnectionPool from "http-connection-pool";
 import axios, { AxiosResponse } from "axios";
 
-const connectionPool = new ConnectionPool(1_000);
+const connectionPool = new ConnectionPool({size: 1000});
 for (let i = 0; i <= 100_000; i++) {
   connectionPool.addExternalHttpClient<AxiosResponse>(axios.get, `http://localhost:${PORT}/test`)
     .then(d => console.log(d.data, i));
@@ -99,7 +99,7 @@ for (let i = 0; i <= 100_000; i++) {
 import ConnectionPool from 'http-connection-pool';
 import fetch, {Response} from "node-fetch";
 
-const connectionPool = new ConnectionPool(1_000);
+const connectionPool = new ConnectionPool({size: 1000});
 for (let i = 0; i <= 100_000; i++) {
   connectionPool.addExternalHttpClient<Response>(fetch, `http://localhost:${PORT}/test`)
     .then(d => d.text())
