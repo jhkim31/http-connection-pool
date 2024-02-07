@@ -26,7 +26,3 @@ for (let i = 0; i <= 100_000; i++) {
   })
 }
 ```
-
-# API Docs
-## [ConnectionPool](./2-ConnectionPool.md)
-## [Interface](./3-Interface.md)

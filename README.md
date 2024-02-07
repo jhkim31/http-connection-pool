@@ -1,7 +1,11 @@
 # http-connection-pool
+| [npm](https://www.npmjs.com/package/http-connection-pool) | 
+
 **http-connection-pool** quickly performs many HTTP requests in concurrently that cannot be processed at once. Like a **thread-pool**.
 
+
 ## Table of contents
+* [Docs](#docs)
 * [Installation](#installation)
 * [Usage](#usage)
   * [CJS (js)](#cjs-js)
@@ -11,6 +15,11 @@
   * [axios](#axios)
   * [node-fetch](#node-fetch)
 * [Compare](#compare)
+
+## Docs
+* [Getting Started](./docs/1-GettingStarted.md)
+* [API](./docs/2-API.md)
+* [Interface](./docs/3-Interface.md)
 
 ## Installation
 ```bash
