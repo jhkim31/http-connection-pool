@@ -135,6 +135,8 @@ export class ConnectionPool {
       try {        
         const request = new HcpHttpClient({
           url: createUrl(requestConfig.url),
+          requestHeaders: requestConfig.headers,
+          requestBody: requestConfig.body,
           httpAgent: this.#httpAgent,
           httpsAgent: this.#httpsAgent,
           method: requestConfig.method,

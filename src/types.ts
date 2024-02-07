@@ -44,8 +44,10 @@ export interface UrlInfo {
 export interface HcpRequestConfig {
   url: string | UrlInfo;
   method?: HTTPMethod;
+  headers?: HcpRequestHeaders;
+  body?: HcpRequestBody;
   retry?: number | RetryConfig;
-  timeout?: number | TimeoutConfig;
+  timeout?: ms | TimeoutConfig;
 }
 
 export interface RetryConfig {

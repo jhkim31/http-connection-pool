@@ -19,7 +19,7 @@
 ## Docs
 * [Getting Started](./docs/1-GettingStarted.md)
 * [API](./docs/2-API.md)
-* [Interface](./docs/3-Interface.md)
+* [Types](./docs/3-Types.md)
 
 ## Installation
 ```bash

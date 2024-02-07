@@ -6,17 +6,11 @@ ConnectionPool always tries to empty the requestQueue and performs requests conc
 | property | type | description|
 | :--- | :--- | :--- |
 | #requestQueue| <code>[RequestQueueItem](../src/core/connectionPool.ts)[]</code> | The queue to store requests |
-| #status | <code>[HcpStatus](./3-types.md#hcpstatus)</code> | Indicates the current state of the ConnectionPool. |
+| #status | <code>[HcpStatus](../src/core/connectionPool.ts)</code> | Indicates the current state of the ConnectionPool. |
 | size | <code>number</code> | Limit the maximum number of http connections that can be performed concurrently. |
 
 
-## Config: [HcpConfig](./3-types.md#HcpConfig)
-
-```json
-{
-  size: 10 //default
-}
-```
+## Config: [HcpConfig](./3-Types.md#HcpConfig)
 | property | type | default | description |
 | :--- | :--- | :---| :--- |
 | size | <code>number</code> | 10 | Defines the size of ConnectionPool |
@@ -30,12 +24,12 @@ const c = new ConnectionPool({
 ```
 
 ## Method
-### <code>add(requestConfig: [HcpRequestConfig](./3-types.md#hcprequestconfig)): Promise<[HcpResponse](./3-types.md#HcPResponse)></code>
+### <code>add(requestConfig: [HcpRequestConfig](./3-Types.md#hcprequestconfig)): Promise<[HcpResponse](./3-Types.md#HcPResponse)></code>
 Add a request. The added request will be performed without any additional processing.
 
 The order of request execution is guaranteed, but the order of completion is not.
 
-### <code>addExternalHttpClient<`ExternalHttpResponse` = any>(fn: [RequestFunction](./3-types.md#requestfunction), ...args: any): Promise<`ExternalHttpResponse`></code>
+### <code>addExternalHttpClient<`ExternalHttpResponse` = any>(fn: [RequestFunction`<ResponseType>`](./3-Types.md#requestfunction), ...args: any): Promise<`ExternalHttpResponse`></code>
 * `fn` :  Promise-based executable request function
 * `...args` : Arguments of request function `fn`
 
@@ -60,7 +54,7 @@ Returns the number of pending requests currently waiting in the [#requestQueue](
 Returns `Promise<void>`, which is resolved by the following two conditions.
 
 When the function is called,
-1. If, the [#requestQueue](#property) is empty and the [#status](#property) is [IDLE](./3-types.md#hcpstatus), it will be resolved immediately.
+1. If, the [#requestQueue](#property) is empty and the [#status](#property) is [IDLE](./3-Types.md#hcpstatus), it will be resolved immediately.
 2. Else then, when all requests are completed([#requestQueue](#property)), it will be resolved.
 
 ```javascript
