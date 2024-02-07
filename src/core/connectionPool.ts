@@ -3,7 +3,7 @@ import http from 'node:http';
 import https from 'node:https';
 
 import { createRetry, createUrl, createTimeout } from '../lib';
-import { HcpRequestConfig, HcpResponse } from '../types';
+import { HcpRequestConfig, HcpResponse, HcpConfig } from '../types';
 import HcpHttpClient from './hcpHttpClient';
 import ExternalHttpClient, { RequestFunction } from './externalHttpClient';
 import { HttpClient } from './httpClient';
@@ -11,6 +11,13 @@ import { HcpErrorCode, HcpError } from '../error';
 
 type Resolve = (value: HcpResponse | PromiseLike<HcpResponse>) => void;
 type Reject = (e: any) => void;
+
+const HCPStatus = {
+  idle: 'idle',
+  busy: 'busy'
+} as const;
+
+type HcpStatus = typeof HCPStatus[keyof typeof HCPStatus];
 
 interface RequestQueueItem {
   request: HttpClient;
@@ -60,16 +67,33 @@ export class ConnectionPool {
    */
   httpsAgent: https.Agent;
 
-  #status: number;
+  #status: HcpStatus;
 
-  constructor(size = 10) {
-    this.size = size;
+  /**
+   * @deprecated `ConnectionPool(size: number)` is depracated and no longer supported.
+   * 
+   * Use {@link HcpConfig}
+   */
+  constructor(size: number);
+  /**
+   * 
+   * @param config {@link HcpConfig}
+   */
+  constructor(config: HcpConfig);
+  constructor(config: HcpConfig | number) {
+    if (typeof config === "number") {
+      console.warn(`Warning: ConnectionPool(size: number) is depracated and no longer supported from the next major version. \nPlease use HcpConfig instead.`)
+      this.size = config;
+    } else {
+      this.size = config.size;
+    }
+    
     this.#requestQueue = [];
     this.#events = new EventEmitter();
     this.currentSize = 0;
     this.httpAgent = new http.Agent({ keepAlive: true });
     this.httpsAgent = new https.Agent({ keepAlive: true });
-    this.#status = 0;
+    this.#status = HCPStatus.idle;
     /**
      * The 'next' event performs the queued request and calls the 'next' event.
      * 
@@ -81,7 +105,7 @@ export class ConnectionPool {
         if (requestItem !== undefined) {
           const { request, resolve, reject } = requestItem;
           this.currentSize++;
-          this.#status = 1;
+          this.#status = HCPStatus.busy;
 
           request.call()
             .then(resolve)
@@ -90,7 +114,7 @@ export class ConnectionPool {
               this.currentSize--;
               this.#events.emit('next');
               if (this.currentSize === 0) {
-                this.#status = 0;
+                this.#status = HCPStatus.idle;
                 this.#events.emit("done");
               }
             })
@@ -158,7 +182,7 @@ export class ConnectionPool {
    * If the queue size is 0, Promise is fulfilled immediately.
    */
   done(): Promise<void> {
-    if (this.#requestQueue.length === 0 && this.#status === 0) {
+    if (this.#requestQueue.length === 0 && this.#status === HCPStatus.idle) {
       return new Promise<void>((resolve) => {
         resolve();
       })     

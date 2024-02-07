@@ -1,5 +1,3 @@
-**http-connection-pool** quickly processes many HTTP requests in concurrency that cannot be processed at once like a thread-pool.
-
 # Installation
 ```bash
 npm install http-connection-pool
@@ -28,3 +26,7 @@ for (let i = 0; i <= 100_000; i++) {
   })
 }
 ```
+
+# API Docs
+## [ConnectionPool](./2-ConnectionPool.md)
+## [Interface](./3-Interface.md)

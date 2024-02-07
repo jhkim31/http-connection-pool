@@ -1,5 +1,5 @@
 # http-connection-pool
-**http-connection-pool** quickly processes many HTTP requests in concurrency that cannot be processed at once like a **thread-pool**.
+**http-connection-pool** quickly performs many HTTP requests in concurrently that cannot be processed at once. Like a **thread-pool**.
 
 ## Table of contents
 * [Installation](#installation)
