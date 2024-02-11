@@ -93,7 +93,7 @@ export class ConnectionPool {
       } 
       this.size = config;
     } else {
-      if (config.size <= 0 || !Number.isInteger(config)) {
+      if (config.size <= 0 || !Number.isInteger(config.size)) {        
         throw new HcpError(`Size must be positive Integer. Received ${config}`, HcpErrorCode.TYPE_ERROR);
       } 
       this.size = config.size;
