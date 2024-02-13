@@ -1,9 +1,11 @@
-name: TEST
+name: opened
 
 on: 
   pull_request:    
     types:
     - opened    
+    branches:
+    - 'releases/**'
 
 jobs:
   build:
