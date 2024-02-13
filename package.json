@@ -1,6 +1,6 @@
 {
   "name": "http-connection-pool",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Fast multiple HTTP request client for Node.js",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
