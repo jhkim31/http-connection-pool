@@ -82,6 +82,7 @@ export class ConnectionPool {
   /**
    * 
    * @param config {@link HcpConfig}
+   * 
    */
   constructor(config: HcpConfig);
   
