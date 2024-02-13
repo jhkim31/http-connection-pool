@@ -1,4 +1,4 @@
-name: closed
+name: closed test
 
 on: 
   pull_request:
