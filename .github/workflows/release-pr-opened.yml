@@ -4,12 +4,12 @@ on:
   pull_request:
     branches:
     - master
+    - releases/**
     types:
     - opened
 
 jobs:
-  releases_pr_opened:
-    if:  startsWith(github.head_ref, 'releases/')    
+  releases_pr_opened:    
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
