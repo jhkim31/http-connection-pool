@@ -58,6 +58,8 @@ export class ConnectionPool {
    */
   #events: EventEmitter;
 
+  
+
   /**
    * To use the same httpAgent in many Request instances
    */
