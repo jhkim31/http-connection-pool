@@ -1,0 +1,30 @@
+name: release pr closed
+
+on: 
+  pull_request:
+    branches:
+    - master
+    types:
+    - closed
+
+jobs:
+  package_publish:    
+    if:  startsWith(github.head_ref, 'releases/')    
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install dependencies
+      run: npm install -D
+
+    - name: Package bundling
+      run: npm run bundle
+
+    - name: Publish package
+      env:
+        NODE_AUTH_TOKEN: ${{NPM_ACCESS_TOKEN}}
+      run: npm publish

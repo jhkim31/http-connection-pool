@@ -1,0 +1,28 @@
+name: release pr opened
+
+on: 
+  pull_request:
+    branches:
+    - master
+    types:
+    - opened
+
+jobs:
+  package_publish_test:    
+    if:  startsWith(github.head_ref, 'releases/')    
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install dependencies
+      run: npm install -D
+
+    - name: Package bundling
+      run: npm run bundle
+
+    - name: Package publish test
+      run: npm publish --dry-run
