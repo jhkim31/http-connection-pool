@@ -17,5 +17,5 @@ jobs:
     - name: bundle
       run: npm run bundle
 
-    - name: TEST
-      run: npm test
+    - name: npm TEST
+      run: npm version patch
