@@ -8,7 +8,7 @@ on:
     - opened
 
 jobs:
-  releases_pr_opened:    
+  package_publish_test:    
     if:  startsWith(github.head_ref, 'releases/')    
     runs-on: ubuntu-latest
     steps:
@@ -21,8 +21,8 @@ jobs:
     - name: Install dependencies
       run: npm install -D
 
-    - name: bundle
+    - name: Package bundling
       run: npm run bundle
 
-    - name: npm publish test
+    - name: Package publish test
       run: npm publish --dry-run
