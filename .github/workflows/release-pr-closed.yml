@@ -1,9 +1,7 @@
 name: closed
 
 on: 
-  pull_request:
-    types: 
-    - closed
+  pull_request:    
     branches:
     - test
 

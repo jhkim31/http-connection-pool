@@ -2,10 +2,10 @@ name: opened
 
 on: 
   pull_request:    
-    types:
-    - opened    
     branches:
     - test
+    - 'releases/**'    
+    
 
 jobs:
   build:
