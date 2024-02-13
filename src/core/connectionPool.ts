@@ -84,6 +84,7 @@ export class ConnectionPool {
    * @param config {@link HcpConfig}
    */
   constructor(config: HcpConfig);
+  
   constructor(config?: HcpConfig | number) {
     if (typeof config === "undefined") {      
       this.size = 10;
