@@ -1,0 +1,19 @@
+name: release pr closed
+
+on: 
+  pull_request:
+    branches:
+    - master
+    types:
+    - closed
+
+jobs:
+  releases_pr_opened:
+    if:  startsWith(github.head_ref, 'releases/')    
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'

@@ -1,5 +1,5 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
-module.exports = {
+module.exports = {  
   roots: ["./test", "./src"],
   preset: 'ts-jest',
   testEnvironment: 'node',
