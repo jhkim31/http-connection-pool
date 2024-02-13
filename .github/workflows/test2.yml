@@ -1,9 +1,9 @@
-name: opend
+name: closed
 
 on: 
   pull_request:
     types: 
-    - opened
+    - closed
     branches:
     - 'releases/**'
 
