@@ -1,8 +1,13 @@
 import http from "node:http";
+import https from "node:https";
 import { RequestConfig } from "./core/hcpHttpClient";
 
 export interface HcpConfig {
-  size: number
+  size: number;
+  httpAgent?: http.Agent;
+  httpsAgent?: https.Agent;
+  retry?: number | RetryConfig;
+  timeout?: ms | TimeoutConfig;
 }
 
 export type HcpRequestHeaders = { [key: string]: string };

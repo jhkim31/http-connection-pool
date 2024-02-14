@@ -3,7 +3,7 @@ import http from 'node:http';
 import https from 'node:https';
 
 import { createRetry, createUrl, createTimeout } from '../lib';
-import { HcpRequestConfig, HcpResponse, HcpConfig } from '../types';
+import { HcpRequestConfig, HcpResponse, HcpConfig, ms, RetryConfig, TimeoutConfig } from '../types';
 import HcpHttpClient from './hcpHttpClient';
 import ExternalHttpClient, { RequestFunction } from './externalHttpClient';
 import { HttpClient } from './httpClient';
@@ -57,6 +57,8 @@ export class ConnectionPool {
    * EventEmitter for internal operations
    */
   #events: EventEmitter;
+  #retry?: number | RetryConfig;
+  #timeout?: ms | TimeoutConfig;
 
   /**
    * To use the same httpAgent in many Request instances
@@ -75,35 +77,42 @@ export class ConnectionPool {
    */
   constructor();
   /**
-   * 
    * Recomended to use {@link HcpConfig}
    */
   constructor(size: number);
   /**
-   * 
    * @param config {@link HcpConfig}
    */
   constructor(config: HcpConfig);
   constructor(config?: HcpConfig | number) {
-    if (typeof config === "undefined") {      
+    if (typeof config === "undefined") {          
       this.size = 10;
-    } else if (typeof config === "number") {     
+      this.#httpAgent = new http.Agent({keepAlive: true});
+      this.#httpsAgent = new https.Agent({keepAlive: true});     
+    } else if (typeof config === "number") {           
       if (config <= 0 || !Number.isInteger(config)) {
         throw new HcpError(`Size must be positive Integer. Received ${config}`, HcpErrorCode.TYPE_ERROR);
       } 
-      this.size = config;
+      this.size = config;      
+      this.#httpAgent = new http.Agent({keepAlive: true});
+      this.#httpsAgent = new https.Agent({keepAlive: true});     
     } else {
+      /**
+       * config is HcpConfig
+       */
       if (config.size <= 0 || !Number.isInteger(config.size)) {        
-        throw new HcpError(`Size must be positive Integer. Received ${config}`, HcpErrorCode.TYPE_ERROR);
+        throw new HcpError(`Size must be positive Integer. Received ${config.size}`, HcpErrorCode.TYPE_ERROR);
       } 
-      this.size = config.size;
+      this.size = config.size;       
+      this.#retry = config.retry;
+      this.#timeout = config.timeout;
+      this.#httpAgent = config.httpAgent ?? new http.Agent({keepAlive: true});
+      this.#httpsAgent = config.httpsAgent ?? new https.Agent({keepAlive: true});     
     }
     
     this.#requestQueue = [];
     this.#events = new EventEmitter();
-    this.currentSize = 0;
-    this.#httpAgent = new http.Agent({ keepAlive: true });
-    this.#httpsAgent = new https.Agent({ keepAlive: true });
+    this.currentSize = 0;        
     this.#status = HCPStatus.IDLE;
     /**
      * The 'next' event performs the queued request and calls the 'next' event.
@@ -151,8 +160,8 @@ export class ConnectionPool {
           httpAgent: this.#httpAgent,
           httpsAgent: this.#httpsAgent,
           method: requestConfig.method,
-          retry: createRetry(requestConfig.retry),
-          timeout: createTimeout(requestConfig.timeout)
+          retry: typeof requestConfig.retry === "undefined" ? createRetry(this.#retry) : createRetry(requestConfig.retry),
+          timeout: typeof requestConfig.timeout === "undefined" ? createTimeout(this.#timeout) : createTimeout(requestConfig.timeout)
         });
 
         this.#requestQueue.push({
