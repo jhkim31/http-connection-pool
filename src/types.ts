@@ -1,5 +1,6 @@
 import http from "node:http";
 import https from "node:https";
+import stream from "node:stream"
 import { RequestConfig } from "./core/hcpHttpClient";
 
 export interface HcpConfig {
@@ -11,7 +12,7 @@ export interface HcpConfig {
 }
 
 export type HcpRequestHeaders = { [key: string]: string };
-export type HcpRequestBody = string | object;
+export type HcpRequestBody = string | object | stream;
 
 export interface HcpResponse {
   statusCode?: number;
