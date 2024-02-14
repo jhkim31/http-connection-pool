@@ -6,6 +6,7 @@ app.use(express.text());
 app.use(express.json());    
 
 app.post("/post", (req, res) => {
+  console.log(req.body);
   res.send(req.body);
 })
 

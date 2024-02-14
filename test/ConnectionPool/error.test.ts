@@ -1,8 +1,8 @@
 import ConnectionPool from '../../src';
-import HcpHttpClient from '../../src/core/hcpHttpClient';
-import { HcpErrorCode, HcpError } from '../../src/error';
-import { HTTPMethod } from '../../src/types';
+import { HcpErrorCode} from '../../src/error';
 import app from '../server';
+import http from "node:http";
+import https from "node:https";
 
 const PORT = 3020;
 const PROTOCOL = "http";
@@ -16,6 +16,29 @@ describe('ConectionPool Error Test', () => {
 
   afterAll(() => {
     server.close();
+  })
+
+  test('Invalid constructor args', async () => {
+    try {
+      new ConnectionPool({
+        size: 10,
+        httpAgent: new http.Agent({keepAlive: true}),
+        retry : -1
+      });
+    } catch (error: any) {
+      expect(error.code).toBe(HcpErrorCode.INVALID_ARGS);
+    }   
+    
+    try {
+      new ConnectionPool({
+        size: 10,
+        httpAgent: new http.Agent({keepAlive: true}),
+        retry : 3,
+        timeout: -1
+      });
+    } catch (error: any) {
+      expect(error.code).toBe(HcpErrorCode.INVALID_ARGS);
+    }      
   })
 
   test('Add Request Type Error (url string)', async () => {
@@ -65,7 +88,7 @@ describe('ConectionPool Error Test', () => {
       })
       .catch(e => {
         expect(e.message).toBe(`The value of "retry" expected positive number, not ${retry}`);
-        expect(e.code).toBe(HcpErrorCode.BAD_REQUEST);
+        expect(e.code).toBe(HcpErrorCode.INVALID_ARGS);
       })
 
     await c.add({
@@ -80,7 +103,7 @@ describe('ConectionPool Error Test', () => {
       })
       .catch(e => {
         expect(e.message).toBe(`The value of "retry" expected positive number, not ${retry}`);
-        expect(e.code).toBe(HcpErrorCode.BAD_REQUEST);
+        expect(e.code).toBe(HcpErrorCode.INVALID_ARGS);
       })
 
     await c.add({
@@ -96,7 +119,7 @@ describe('ConectionPool Error Test', () => {
       })
       .catch(e => {
         expect(e.message).toBe(`The value of "retryDelay" expected positive number, not ${retry}`);
-        expect(e.code).toBe(HcpErrorCode.BAD_REQUEST);
+        expect(e.code).toBe(HcpErrorCode.INVALID_ARGS);
       })
   })
 
@@ -113,7 +136,7 @@ describe('ConectionPool Error Test', () => {
       })
       .catch(e => {
         expect(e.message).toBe(`The value of "timeout" expected positive number, not ${timeout}`);
-        expect(e.code).toBe(HcpErrorCode.BAD_REQUEST);
+        expect(e.code).toBe(HcpErrorCode.INVALID_ARGS);
       })
 
     await c.add({
@@ -128,7 +151,7 @@ describe('ConectionPool Error Test', () => {
       })
       .catch(e => {
         expect(e.message).toBe(`The value of "timeout" expected positive number, not ${-3}`);
-        expect(e.code).toBe(HcpErrorCode.BAD_REQUEST);
+        expect(e.code).toBe(HcpErrorCode.INVALID_ARGS);
       })
   })
 })

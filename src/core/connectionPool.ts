@@ -2,12 +2,13 @@ import { EventEmitter } from 'node:events';
 import http from 'node:http';
 import https from 'node:https';
 
-import { createRetry, createUrl, createTimeout } from '../lib';
+import { createRetry, createUrl, createTimeout, isValidRetry, isValidTimeout } from '../lib';
 import { HcpRequestConfig, HcpResponse, HcpConfig, ms, RetryConfig, TimeoutConfig } from '../types';
 import HcpHttpClient from './hcpHttpClient';
 import ExternalHttpClient, { RequestFunction } from './externalHttpClient';
 import { HttpClient } from './httpClient';
 import { HcpErrorCode, HcpError } from '../error';
+import { isPositiveInteger } from '../utils';
 
 type Resolve = (value: HcpResponse | PromiseLike<HcpResponse>) => void;
 type Reject = (e: any) => void;
@@ -40,7 +41,7 @@ export class ConnectionPool {
    * 
    * Additional requests are added to this queue, and requests are performed on a first-in-first-out basis.
    */
-#requestQueue: RequestQueueItem[];
+  #requestQueue: RequestQueueItem[];
   /**
    * Limit the number of requests that can be performed simultaneously.
    * 
@@ -85,34 +86,42 @@ export class ConnectionPool {
    */
   constructor(config: HcpConfig);
   constructor(config?: HcpConfig | number) {
-    if (typeof config === "undefined") {          
+    if (typeof config === "undefined") {
       this.size = 10;
-      this.#httpAgent = new http.Agent({keepAlive: true});
-      this.#httpsAgent = new https.Agent({keepAlive: true});     
-    } else if (typeof config === "number") {           
-      if (config <= 0 || !Number.isInteger(config)) {
-        throw new HcpError(`Size must be positive Integer. Received ${config}`, HcpErrorCode.TYPE_ERROR);
-      } 
-      this.size = config;      
-      this.#httpAgent = new http.Agent({keepAlive: true});
-      this.#httpsAgent = new https.Agent({keepAlive: true});     
+      this.#httpAgent = new http.Agent({ keepAlive: true });
+      this.#httpsAgent = new https.Agent({ keepAlive: true });
+    } else if (typeof config === "number") {
+      if (isPositiveInteger(config)) {
+        this.size = config;
+        this.#httpAgent = new http.Agent({ keepAlive: true });
+        this.#httpsAgent = new https.Agent({ keepAlive: true });
+      } else {
+        throw new HcpError(`The value of "size" expected positive number, not ${config}`, HcpErrorCode.INVALID_ARGS);
+      }
     } else {
       /**
        * config is HcpConfig
        */
-      if (config.size <= 0 || !Number.isInteger(config.size)) {        
-        throw new HcpError(`Size must be positive Integer. Received ${config.size}`, HcpErrorCode.TYPE_ERROR);
-      } 
-      this.size = config.size;       
-      this.#retry = config.retry;
-      this.#timeout = config.timeout;
-      this.#httpAgent = config.httpAgent ?? new http.Agent({keepAlive: true});
-      this.#httpsAgent = config.httpsAgent ?? new https.Agent({keepAlive: true});     
+
+      if (isPositiveInteger(config.size)) {
+        this.size = config.size;        
+      } else {
+        throw new HcpError(`The value of "size" expected positive number, not ${config.size}`, HcpErrorCode.INVALID_ARGS);
+      }      
+
+      if (isValidRetry(config.retry)) {
+        this.#retry = config.retry;
+      }
+      if (isValidTimeout(config.timeout)) {
+        this.#timeout = config.timeout;
+      }
+      this.#httpAgent = config.httpAgent ?? new http.Agent({ keepAlive: true });
+      this.#httpsAgent = config.httpsAgent ?? new https.Agent({ keepAlive: true });
     }
-    
+
     this.#requestQueue = [];
     this.#events = new EventEmitter();
-    this.currentSize = 0;        
+    this.currentSize = 0;
     this.#status = HCPStatus.IDLE;
     /**
      * The 'next' event performs the queued request and calls the 'next' event.
@@ -152,7 +161,7 @@ export class ConnectionPool {
    */
   add(requestConfig: HcpRequestConfig): Promise<HcpResponse> {
     return new Promise<HcpResponse>((resolve, reject) => {
-      try {        
+      try {
         const request = new HcpHttpClient({
           url: createUrl(requestConfig.url),
           requestHeaders: requestConfig.headers,
@@ -171,17 +180,17 @@ export class ConnectionPool {
         });
 
         this.#events.emit('next');
-      } catch (error: any) {   
-        reject(new HcpError(error?.message ?? "Add Request Error", error?.code ?? HcpErrorCode.BAD_REQUEST, {origin: error}));        
+      } catch (error: any) {
+        reject(new HcpError(error?.message ?? "Add Request Error", error?.code ?? HcpErrorCode.BAD_REQUEST, { origin: error }));
       }
     })
   }
 
   addExternalHttpClient<ExternalHttpResponse = any>(fn: RequestFunction, ...args: any) {
-    return new Promise<ExternalHttpResponse>((resolve, reject) => {     
+    return new Promise<ExternalHttpResponse>((resolve, reject) => {
       this.#requestQueue.push({
         request: new ExternalHttpClient(fn, ...args),
-        resolve, 
+        resolve,
         reject
       })
       this.#events.emit('next');
@@ -207,7 +216,7 @@ export class ConnectionPool {
     if (this.#requestQueue.length === 0 && this.#status === HCPStatus.IDLE) {
       return new Promise<void>((resolve) => {
         resolve();
-      })     
+      })
     } else {
       return new Promise<void>((resolve) => {
         this.#events.once('done', () => {

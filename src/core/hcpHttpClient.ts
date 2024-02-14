@@ -190,11 +190,13 @@ export default class HcpHttpClient extends HttpClient {
         if (typeof this.body == "string") {          
           if (req.getHeader("Content-Type") !== "text/plain") {
             req.setHeader('Content-Type', 'text/plain');
+            req.setHeader("Content-Length", Buffer.byteLength(this.body))
           }          
           req.write(this.body);
         } else {
           if (req.getHeader("Content-Type") !== "application/json") {            
             req.setHeader('Content-Type', 'application/json');
+            req.setHeader("Content-Length", Buffer.byteLength(JSON.stringify(this.body)));
           }          
           req.write(JSON.stringify(this.body));
         }
