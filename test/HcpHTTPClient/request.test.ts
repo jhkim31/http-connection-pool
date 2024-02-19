@@ -1,10 +1,19 @@
+import FormData from 'form-data';
+import multer from 'multer';
+import fs from 'node:fs';
+import path from 'node:path';
+import converter from "xml2js";
+
 import HcpHttpClient from '../../src/core/hcpHttpClient';
 import app from '../server';
 
+const PROTOCOL = "http";
+const HOST = "localhost";
+const PORT = 3003;
 describe("HcpHTTPClient module test", () => {
   let server: any;
   beforeAll(() => {
-    server = app.listen(3003)
+    server = app.listen(PORT)
   })
 
   afterAll(() => {
@@ -118,7 +127,10 @@ describe("HcpHTTPClient module test", () => {
     const r = new HcpHttpClient({
       url: new URL("http://localhost:3003/post/send/string"),
       method: "post",
-      requestBody: "POST"
+      requestBody: "POST",
+      requestHeaders: {
+        "Content-Type": "text/plain"
+      }
     })
     await r.call()
       .then(d => {
@@ -138,7 +150,10 @@ describe("HcpHTTPClient module test", () => {
     const r = new HcpHttpClient({
       url: new URL("http://localhost:3003/post/send/json"),
       method: "post",
-      requestBody: { "test": 123 }
+      requestBody: { "test": 123 },
+      requestHeaders: {
+        "Content-Type": "application/json"
+      }
     })
     await r.call()
       .then(d => {
@@ -147,24 +162,82 @@ describe("HcpHTTPClient module test", () => {
       })
   })
 
-  test('Set headers', async () => {
-    app.get('/headers', (req, res) => {                  
-      res.json(req.headers);
+  test('POST send xml', async () => {
+    /**
+     * * Send a json to the body and receive thet json string as a result.
+     */
+    app.post('/post/send/xml', async (req, res) => {
+      const parser = new converter.Parser({ explicitArray: false, trim: true });
+      const parsedXML = await parser.parseStringPromise(req.body);      
+      res.json(parsedXML);      
     })
 
     const r = new HcpHttpClient({
-      url: new URL("http://localhost:3003/headers"),      
+      url: new URL("http://localhost:3003/post/send/xml"),
+      method: "post",
+      requestBody: `<xml>
+        <head>head</head>
+        <body>body</body>
+      </xml>
+      `,
       requestHeaders: {
-        "Test-Header": "TestHeader"
-      },
-      requestBody: {
-        "a" : 123
+        "Content-Type": "text/xml"
       }
     })
     await r.call()
       .then(d => {
-        expect(d.statusCode).toBe(200);        
+        expect(d.statusCode).toBe(200);
+        expect(JSON.parse(d.body)).toStrictEqual({ xml: { head: "head", body: "body" } });
+      })
+  })
+
+  test('POST send file', async () => {
+    const storage = multer.memoryStorage();
+    const upload = multer({ storage: storage });
+
+    app.post('/post/upload', upload.single('file'), (req, res) => {
+      res.json({
+        name: req.file?.originalname,
+        size: req.file?.size,
+        mimetype: req.file?.mimetype
+      });
+    })
+
+    const formData = new FormData();
+    formData.append('file', fs.createReadStream(path.resolve(__dirname, './sample.png')));
+    const r = new HcpHttpClient({
+      url: new URL(`${PROTOCOL}://${HOST}:${PORT}/post/upload`),
+      method: "post",
+      requestBody: formData,
+      requestHeaders: formData.getHeaders()
+    })
+    await r.call()
+      .then(d => {
+        expect(d.statusCode).toBe(200);
+        expect(JSON.parse(d.body)).toStrictEqual({ name: 'sample.png', size: 2039316, mimetype: 'image/png' });
+      })
+  })
+
+  test('Set headers', async () => {
+    app.get('/headers', (req, res) => {
+      res.json(req.headers);
+    })
+
+    const r = new HcpHttpClient({
+      url: new URL("http://localhost:3003/headers"),
+      requestHeaders: {      
+        "content-type" : "application/test",
+        "Test-Header": "TestHeader"
+      },
+      requestBody: {
+        "a": 123
+      }
+    })
+    await r.call()
+      .then(d => {
+        expect(d.statusCode).toBe(200);
         expect(JSON.parse(d.body)).toHaveProperty("test-header", "TestHeader");
+        expect(JSON.parse(d.body)).toHaveProperty("content-type", "application/test");
       })
   });
 });

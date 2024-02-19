@@ -20,6 +20,17 @@ describe('ConectionPool Error Test', () => {
 
   test('Invalid constructor args', async () => {
     try {
+      new ConnectionPool(-1);
+    } catch (error: any) {
+      expect(error.code).toBe(HcpErrorCode.INVALID_ARGS);
+    } 
+
+    try {
+      new ConnectionPool({size: -1})
+    } catch (error: any) {
+      expect(error.code).toBe(HcpErrorCode.INVALID_ARGS);
+    }
+    try {
       new ConnectionPool({
         size: 10,
         httpAgent: new http.Agent({keepAlive: true}),

@@ -1,4 +1,4 @@
-
+import { HcpErrorCode } from "../src/error";
 import {createUrl, createRetry, createTimeout} from "../src/lib";
 import { UrlInfo, TimeoutConfig } from "../src/types";
 
@@ -98,6 +98,25 @@ describe("lib/createRetry", () => {
     expect(retry4.retry).toBe(0);
     expect(retry4.retryDelay).toBe(0);
   })
+  test(`invalid number (negative integer)`, () => {
+    try {
+      createRetry(-1);
+    } catch (error: any) {
+      expect(error.message).toBe(`The value of "retry" expected positive number, not -1`);
+      expect(error.code).toBe(HcpErrorCode.INVALID_ARGS)
+    }    
+  })
+  test(`invalid number (negative integer)`, () => {
+    try {
+      createRetry({
+        retry: 3,
+        retryDelay: -1
+      });
+    } catch (error: any) {
+      expect(error.message).toBe(`The value of "retryDelay" expected positive number, not -1`);
+      expect(error.code).toBe(HcpErrorCode.INVALID_ARGS)
+    }    
+  })
 })
 describe("lib/createTimeout", () => {
   test("valid number parameter", () => {
@@ -117,4 +136,24 @@ describe("lib/createTimeout", () => {
 
     expect(timeout.timeout).toBe(0);
   });
+
+  test(`invalid number (negative integer)`, () => {
+    try {
+      createTimeout(-1);
+    } catch (error: any) {
+      expect(error.message).toBe(`The value of "timeout" expected positive number, not -1`);
+      expect(error.code).toBe(HcpErrorCode.INVALID_ARGS)
+    }    
+  })  
+
+  test(`invalid number (negative integer)`, () => {
+    try {
+      createTimeout({
+        timeout: -1
+      });
+    } catch (error: any) {
+      expect(error.message).toBe(`The value of "timeout" expected positive number, not -1`);
+      expect(error.code).toBe(HcpErrorCode.INVALID_ARGS)
+    }    
+  })  
 })

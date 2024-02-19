@@ -11,7 +11,10 @@ export interface HcpConfig {
   timeout?: ms | TimeoutConfig;
 }
 
-export type HcpRequestHeaders = { [key: string]: string };
+export interface HcpRequestHeaders extends http.OutgoingHttpHeaders {
+  "Content-Type"?: string;
+  "content-type"?: string;
+}
 export type HcpRequestBody = string | object | stream;
 
 export interface HcpResponse {

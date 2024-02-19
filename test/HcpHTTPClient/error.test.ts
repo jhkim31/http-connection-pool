@@ -3,10 +3,11 @@ import { HcpErrorCode, HcpError } from '../../src/error';
 import { HTTPMethod } from '../../src/types';
 import app from '../server';
 
+const PORT = 3001;
 describe('HcpHTTPClient Error Test', () => {
   let server: any;
   beforeAll(() => {
-    server = app.listen(3001)
+    server = app.listen(PORT)
   })
 
   afterAll(() => {
@@ -106,6 +107,7 @@ describe('HcpHTTPClient Error Test', () => {
   })
 
   test('Timeout test', async () => {
+    const st = new Date().getTime();
     app.get('/timeout', (req, res) => {
       setTimeout(() => {
         res.send("OK")
@@ -123,8 +125,30 @@ describe('HcpHTTPClient Error Test', () => {
         // expected TIMEOUT, not resolve
         expect(true).toBe(false);
       })
-      .catch(error => {        
+      .catch(error => {
+        const et = new Date().getTime();
+        expect(et - st).toBeGreaterThanOrEqual(1000);        
         expect(error.code).toBe(HcpErrorCode.TIMEOUT);
       })
   })
+
+  test('Set headers', async () => {
+    app.get('/headers', (req, res) => {
+      res.json(req.headers);
+    })
+    
+    const r = new HcpHttpClient({
+      url: new URL(`http://localhost:${PORT}/headers`),
+      requestHeaders: {      
+        "content-type" : "application/json"        
+      },
+      requestBody: "test"
+    })
+    await r.call()
+      .then(d => {
+      })
+      .catch(e => {        
+        expect(e.res.statusCode).toBe(400);
+      })
+  });
 })

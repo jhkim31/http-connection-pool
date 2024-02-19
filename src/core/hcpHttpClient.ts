@@ -193,8 +193,8 @@ export default class HcpHttpClient extends HttpClient {
             console.warn(`[HCP_WARNNING]: Request header "Content-Type" is empty.`);
           }
           this.body.pipe(req);          
-        } else if (typeof this.body == "string") {          
-          if (typeof req.getHeader("Content-Type") === "undefined") {
+        } else if (typeof this.body == "string") {                
+          if (typeof req.getHeader("content-type") === "undefined") {
             req.setHeader('Content-Type', 'text/plain');            
           }          
           if (typeof req.getHeader("Content-Length") === "undefined") {

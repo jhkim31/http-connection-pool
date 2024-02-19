@@ -1,4 +1,4 @@
-import {isJsonString, sleep} from "../src/utils";
+import {isJsonString, isPositiveInteger, sleep} from "../src/utils";
 
 describe("utils/isJsonString", () => {
   test('valid json string', () => {
@@ -31,3 +31,22 @@ describe("utils/sleep", () => {
     expect(et.getTime() - st.getTime()).toBeGreaterThanOrEqual(1000);
   })
 }); 
+
+describe("utils/isPositiveInteger", () => {
+  test(`positive integer`,() => {   
+    expect(isPositiveInteger(3)).toBe(true);
+  })
+
+  test(`negative integer`,() => {   
+    expect(isPositiveInteger(-33)).toBe(false);
+  })
+
+  test(`zero`,() => {   
+    expect(isPositiveInteger(0)).toBe(false);
+  })
+
+  test(`positive float`,() => {   
+    expect(isPositiveInteger(3.2)).toBe(false);
+  })
+}); 
+

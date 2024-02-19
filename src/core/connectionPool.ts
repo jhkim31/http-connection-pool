@@ -86,23 +86,18 @@ export class ConnectionPool {
    */
   constructor(config: HcpConfig);
   constructor(config?: HcpConfig | number) {
+    this.#httpAgent = new http.Agent({ keepAlive: true });
+    this.#httpsAgent = new https.Agent({ keepAlive: true });
+
     if (typeof config === "undefined") {
-      this.size = 10;
-      this.#httpAgent = new http.Agent({ keepAlive: true });
-      this.#httpsAgent = new https.Agent({ keepAlive: true });
+      this.size = 10;      
     } else if (typeof config === "number") {
       if (isPositiveInteger(config)) {
-        this.size = config;
-        this.#httpAgent = new http.Agent({ keepAlive: true });
-        this.#httpsAgent = new https.Agent({ keepAlive: true });
+        this.size = config;        
       } else {
         throw new HcpError(`The value of "size" expected positive number, not ${config}`, HcpErrorCode.INVALID_ARGS);
       }
     } else {
-      /**
-       * config is HcpConfig
-       */
-
       if (isPositiveInteger(config.size)) {
         this.size = config.size;        
       } else {
@@ -115,10 +110,14 @@ export class ConnectionPool {
       if (isValidTimeout(config.timeout)) {
         this.#timeout = config.timeout;
       }
-      this.#httpAgent = config.httpAgent ?? new http.Agent({ keepAlive: true });
-      this.#httpsAgent = config.httpsAgent ?? new https.Agent({ keepAlive: true });
+      if (config.httpAgent) {
+        this.#httpAgent = config.httpAgent;
+      }
+      if (config.httpsAgent) {
+        this.#httpsAgent = config.httpsAgent;      
+      }
     }
-
+    
     this.#requestQueue = [];
     this.#events = new EventEmitter();
     this.currentSize = 0;
