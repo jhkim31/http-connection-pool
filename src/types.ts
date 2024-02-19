@@ -1,12 +1,21 @@
 import http from "node:http";
+import https from "node:https";
+import stream from "node:stream"
 import { RequestConfig } from "./core/hcpHttpClient";
 
 export interface HcpConfig {
-  size: number
+  size: number;
+  httpAgent?: http.Agent;
+  httpsAgent?: https.Agent;
+  retry?: number | RetryConfig;
+  timeout?: ms | TimeoutConfig;
 }
 
-export type HcpRequestHeaders = { [key: string]: string };
-export type HcpRequestBody = string | object;
+export interface HcpRequestHeaders extends http.OutgoingHttpHeaders {
+  "Content-Type"?: string;
+  "content-type"?: string;
+}
+export type HcpRequestBody = string | object | stream;
 
 export interface HcpResponse {
   statusCode?: number;

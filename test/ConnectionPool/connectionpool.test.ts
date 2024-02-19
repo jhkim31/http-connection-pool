@@ -1,5 +1,13 @@
-import ConnectionPool, { HTTPMethod, HcpErrorCode } from "../../src";
-import app from "../server";
+import FormData from 'form-data';
+import http from "node:http";
+import https from "node:https";
+import multer from 'multer';
+import fs from 'node:fs';
+import path from 'node:path';
+import converter from 'xml2js';
+
+import ConnectionPool, { HcpErrorCode, HTTPMethod } from '../../src';
+import app from '../server';
 
 const PORT = 3002;
 const HOST = "localhost";
@@ -23,9 +31,9 @@ describe("Connection Pool Module Test", () => {
      */
     app.get('/return/:id', (req, res) => {
       res.send(req.params.id);
-    })
+    })    
     const c = new ConnectionPool();
-
+    const c2 = new ConnectionPool(11);
     for (let i = 0; i < 10; i++) {
       c.add({
         url: `${PROTOCOL}://${HOST}:${PORT}/return/${i}`,
@@ -33,6 +41,32 @@ describe("Connection Pool Module Test", () => {
       })
         .then(d => {
           expect(`${d.body}`).toBe(`${i}`);
+        })
+    }
+  });
+
+  test('set http Agent', async () => {  
+    app.get('/timeout', (req, res) => {
+      setTimeout(() => {
+        res.send("OK");
+      }, 10_000)
+    });      
+    const c = new ConnectionPool({
+      size: 10,
+      httpAgent: new http.Agent({keepAlive: true}),
+      httpsAgent: new https.Agent({keepAlive: true})
+    });
+    
+    for (let i = 0; i < 10; i++) {
+      c.add({
+        url: `${PROTOCOL}://${HOST}:${PORT}/return/${i}`,
+        method: HTTPMethod.get
+      })
+        .then(d => {
+          expect(`${d.body}`).toBe(`${i}`);
+        })
+        .catch(e => {
+          console.error(e);
         })
     }
   });
@@ -278,7 +312,65 @@ describe("Connection Pool Module Test", () => {
         body: { test: "POST" }
       })
         .then(d => {
-          expect(JSON.parse(d.body)).toEqual({ test: "POST" });
+          expect(JSON.parse(d.body)).toStrictEqual({ test: "POST" });
+        })
+    }
+    await c.done();
+  });
+
+  test('POST send xml test', async () => {
+    app.post('/post/xml', async (req, res) => {
+      const parser = new converter.Parser({ explicitArray: false, trim: true });
+      const parsedXML = await parser.parseStringPromise(req.body);      
+      res.json(parsedXML);
+    })
+    const c = new ConnectionPool({ size: 10 });
+
+    for (let i = 0; i < 10; i++) {
+      c.add({
+        url: `${PROTOCOL}://${HOST}:${PORT}/post/xml`,
+        method: HTTPMethod.POST,
+        body: `<xml>
+        xml
+      </xml>
+      `,
+        headers: {
+          "Content-Type": "text/xml"
+        }
+      })
+        .then(d => {
+          expect(d.statusCode).toBe(200);
+          expect(JSON.parse(d.body)).toStrictEqual({ xml: 'xml' });
+        })
+    }
+    await c.done();
+  });
+
+  test('POST send file test', async () => {
+    const storage = multer.memoryStorage();
+    const upload = multer({ storage: storage });
+
+    app.post('/post/upload', upload.single('file'), (req, res) => {
+      res.json({
+        name: req.file?.originalname,
+        size: req.file?.size,
+        mimetype: req.file?.mimetype
+      });
+    })
+    const c = new ConnectionPool({ size: 10 });
+
+    const formData = new FormData();
+    formData.append('file', fs.createReadStream(path.resolve(__dirname, './sample.png')));    
+    for (let i = 0; i < 1; i++) {
+      c.add({
+        url: `${PROTOCOL}://${HOST}:${PORT}/post/upload`,
+        method: HTTPMethod.POST,
+        body: formData,
+        headers: formData.getHeaders()
+      })
+        .then(d => {
+          expect(d.statusCode).toBe(200);
+        expect(JSON.parse(d.body)).toStrictEqual({ name: 'sample.png', size: 2039316, mimetype: 'image/png' });
         })
     }
     await c.done();

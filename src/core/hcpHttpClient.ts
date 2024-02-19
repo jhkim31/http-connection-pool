@@ -1,8 +1,9 @@
 import http from 'node:http';
 import https from 'node:https';
+import stream from 'node:stream';
 
-import { HcpErrorCode, HcpError } from '../error';
-import { HTTPMethod, ms, RetryConfig, HcpRequestHeaders, HcpRequestBody, HcpResponse, AfterRetryHook, RetryErrorHandler, BeforeRetryHook, AfterTimeoutHook, TimeoutConfig } from '../types';
+import { HcpError, HcpErrorCode } from '../error';
+import { AfterRetryHook, AfterTimeoutHook, BeforeRetryHook, HcpRequestBody, HcpRequestHeaders, HcpResponse, HTTPMethod, ms, RetryConfig, RetryErrorHandler, TimeoutConfig } from '../types';
 import { sleep } from '../utils';
 import { HttpClient } from './httpClient';
 
@@ -37,7 +38,7 @@ export interface RequestConfig {
   retry?: RetryConfig;
   timeout?: TimeoutConfig;
   requestHeaders?: HcpRequestHeaders;
-  requestBody?: HcpRequestBody;
+  requestBody?: HcpRequestBody;    
 }
 
 /**
@@ -110,7 +111,6 @@ export default class HcpHttpClient extends HttpClient {
    * * json
    */
   body?: HcpRequestBody;
-
   /**
    * execute before retry
    */
@@ -160,7 +160,7 @@ export default class HcpHttpClient extends HttpClient {
         method: this.method,
         agent: this.agent,
         headers: this.headers
-      }, (res) => {
+      }, (res) => {        
         if (res?.statusCode && res.statusCode >= 400) {
           reject(new HcpError(`${res.statusMessage} with status code ${res.statusCode}`, HcpErrorCode.BAD_RESPONSE, { config: this.config, req, res, retryCount: this.retryCount }));
         } else {
@@ -170,7 +170,7 @@ export default class HcpHttpClient extends HttpClient {
             body += chunk;
           });
 
-          res.on('end', () => {
+          res.on('end', () => {            
             resolve({
               statusCode: res.statusCode,
               statusMessage: res.statusMessage,              
@@ -180,27 +180,39 @@ export default class HcpHttpClient extends HttpClient {
             })
           });   
           
-          res.on('error', (error: any) => {            
+          res.on('error', (error: any) => {                
             reject(new HcpError(error?.message ?? "Response Error", error?.code ?? HcpErrorCode.BAD_RESPONSE, { config: this.config, req, origin: error, retryCount: this.retryCount }));
           })
         }
       })
 
+
       if (this.body) {
-        if (typeof this.body == "string") {          
-          if (req.getHeader("Content-Type") !== "text/plain") {
-            req.setHeader('Content-Type', 'text/plain');
+        if (this.body instanceof stream) {
+          if (typeof req.getHeader("content-type") === "undefined") {
+            console.warn(`[HCP_WARNNING]: Request header "Content-Type" is empty.`);
+          }
+          this.body.pipe(req);          
+        } else if (typeof this.body == "string") {                
+          if (typeof req.getHeader("content-type") === "undefined") {
+            req.setHeader('Content-Type', 'text/plain');            
           }          
+          if (typeof req.getHeader("Content-Length") === "undefined") {
+            req.setHeader("Content-Length", Buffer.byteLength(this.body))
+          }
           req.write(this.body);
         } else {
-          if (req.getHeader("Content-Type") !== "application/json") {            
+          if (typeof req.getHeader("Content-Type") === "undefined") {            
             req.setHeader('Content-Type', 'application/json');
+          }
+          if (typeof req.getHeader("Content-Length") === "undefined") {
+            req.setHeader("Content-Length", Buffer.byteLength(JSON.stringify(this.body)));
           }          
           req.write(JSON.stringify(this.body));
         }
       }
 
-      req.on('error', (error: any) => {
+      req.on('error', (error: any) => {        
         reject(new HcpError(error?.message ?? 'Unknwon Error', error?.code ?? HcpErrorCode.UNKNOWN_ERROR, {config: this.config, req, origin: error, retryCount: this.retryCount}));
       });
       
@@ -211,7 +223,14 @@ export default class HcpHttpClient extends HttpClient {
         });
       }
 
-      req.end();
+      if (this.body instanceof stream) {
+        this.body.on('end', () => {
+          req.end();
+        })
+      } else {
+        req.end();
+      }
+      
     })
   }
 
