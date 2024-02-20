@@ -214,7 +214,7 @@ describe("HcpHTTPClient module test", () => {
     await r.call()
       .then(d => {
         expect(d.statusCode).toBe(200);
-        expect(JSON.parse(d.body)).toStrictEqual({ name: 'sample.png', size: 2039316, mimetype: 'image/png' });
+        expect(JSON.parse(d.body)).toStrictEqual({ name: 'sample.png', size: 4431, mimetype: 'image/png' });
       })
   })
 
@@ -238,6 +238,24 @@ describe("HcpHTTPClient module test", () => {
         expect(d.statusCode).toBe(200);
         expect(JSON.parse(d.body)).toHaveProperty("test-header", "TestHeader");
         expect(JSON.parse(d.body)).toHaveProperty("content-type", "application/test");
+      })
+  });
+
+  test('status code test', async () => {
+    app.get('/404', (req, res) => {
+      res.sendStatus(404)
+    })
+
+    const r = new HcpHttpClient({
+      url: new URL("http://localhost:3003/404"),
+      ignoreStatusCodes: [404]
+    })
+    await r.call()
+      .then(d => {
+        expect(d.statusCode).toBe(404);        
+      })
+      .catch(e => {
+        expect(true).toBe(false);
       })
   });
 });

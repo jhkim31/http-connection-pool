@@ -9,6 +9,7 @@ export interface HcpConfig {
   httpsAgent?: https.Agent;
   retry?: number | RetryConfig;
   timeout?: ms | TimeoutConfig;
+  ignoreStatuCodes?: number[];  
 }
 
 export interface HcpRequestHeaders extends http.OutgoingHttpHeaders {
@@ -57,6 +58,7 @@ export interface HcpRequestConfig {
   body?: HcpRequestBody;
   retry?: number | RetryConfig;
   timeout?: ms | TimeoutConfig;
+  ignoreStatusCodes?: number[];
 }
 
 export interface RetryConfig {

@@ -13,12 +13,12 @@ import { isPositiveInteger } from '../utils';
 type Resolve = (value: HcpResponse | PromiseLike<HcpResponse>) => void;
 type Reject = (e: any) => void;
 
-const HCPStatus = {
+const HcpStatus = {
   IDLE: 'IDLE',
   BUSY: 'BUSY'
 } as const;
 
-type HcpStatus = typeof HCPStatus[keyof typeof HCPStatus];
+type HcpStatus = typeof HcpStatus[keyof typeof HcpStatus];
 
 interface RequestQueueItem {
   request: HttpClient;
@@ -70,6 +70,8 @@ export class ConnectionPool {
    */
   #httpsAgent: https.Agent;
 
+  #ignoreStatusCodes?: number[];
+
   #status: HcpStatus;
 
   /**
@@ -116,12 +118,13 @@ export class ConnectionPool {
       if (config.httpsAgent) {
         this.#httpsAgent = config.httpsAgent;      
       }
+      this.#ignoreStatusCodes = config.ignoreStatuCodes;
     }
     
     this.#requestQueue = [];
     this.#events = new EventEmitter();
     this.currentSize = 0;
-    this.#status = HCPStatus.IDLE;
+    this.#status = HcpStatus.IDLE;
     /**
      * The 'next' event performs the queued request and calls the 'next' event.
      * 
@@ -133,7 +136,7 @@ export class ConnectionPool {
         if (requestItem !== undefined) {
           const { request, resolve, reject } = requestItem;
           this.currentSize++;
-          this.#status = HCPStatus.BUSY;
+          this.#status = HcpStatus.BUSY;
 
           request.call()
             .then(resolve)
@@ -142,7 +145,7 @@ export class ConnectionPool {
               this.currentSize--;
               this.#events.emit('next');
               if (this.currentSize === 0) {
-                this.#status = HCPStatus.IDLE;
+                this.#status = HcpStatus.IDLE;
                 this.#events.emit("done");
               }
             })
@@ -151,7 +154,6 @@ export class ConnectionPool {
       }
     })
   }
-
 
   /**
    * When a new request comes in, it adds the request to the internal queue and calls the 'next' event.
@@ -169,7 +171,8 @@ export class ConnectionPool {
           httpsAgent: this.#httpsAgent,
           method: requestConfig.method,
           retry: typeof requestConfig.retry === "undefined" ? createRetry(this.#retry) : createRetry(requestConfig.retry),
-          timeout: typeof requestConfig.timeout === "undefined" ? createTimeout(this.#timeout) : createTimeout(requestConfig.timeout)
+          timeout: typeof requestConfig.timeout === "undefined" ? createTimeout(this.#timeout) : createTimeout(requestConfig.timeout),
+          ignoreStatusCodes: this.#ignoreStatusCodes
         });
 
         this.#requestQueue.push({
@@ -212,7 +215,7 @@ export class ConnectionPool {
    * If the queue size is 0, Promise is fulfilled immediately.
    */
   done(): Promise<void> {
-    if (this.#requestQueue.length === 0 && this.#status === HCPStatus.IDLE) {
+    if (this.#requestQueue.length === 0 && this.#status === HcpStatus.IDLE) {
       return new Promise<void>((resolve) => {
         resolve();
       })
