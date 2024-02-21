@@ -241,7 +241,7 @@ describe("HcpHTTPClient module test", () => {
       })
   });
 
-  test('status code test', async () => {
+  test('ignore status code test', async () => {
     app.get('/404', (req, res) => {
       res.sendStatus(404)
     })
