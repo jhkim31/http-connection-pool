@@ -13,6 +13,12 @@ for (let i = 0; i <= 100_000; i++) {
   connectionPool.add({
     url: "http://localhost:3000/get"
   })
+  .then(d => {
+    console.log(d.body);
+  })
+  .catch(e => {
+    console.error(e);
+  })
 }
 ```
 ## Typescript
@@ -23,6 +29,12 @@ const connectionPool = new ConnectionPool({size: 1000});
 for (let i = 0; i <= 100_000; i++) {
   connectionPool.add({
     url: "http://localhost:3000/get"
+  })
+  .then(d => {
+    console.log(d.body);
+  })
+  .catch(e => {
+    console.error(e);
   })
 }
 ```

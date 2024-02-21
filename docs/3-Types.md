@@ -11,6 +11,7 @@ interface HcpConfig {
   httpsAgent?: https.Agent;
   retry?: number | RetryConfig;
   timeout?: ms | TimeoutConfig;
+  ignoreStatusCodes?: number[];
 }
 ```
 | property | required | type | description |
@@ -20,22 +21,7 @@ interface HcpConfig {
 | httpsAgent | optional | <code>[https.Agent](https://nodejs.org/api/https.html#class-httpsagent)</code> | Request https Agent |
 | retry | optional | <code>number \| [RetryConfig](#retryconfig)</code> | The number of retries. See more [RetryConfig](#retryconfig) |
 | timeout | optional | <code>[ms](#ms) \| [TimeoutConfig](#timeoutconfig)</code> | The timeout(ms) for the request. See more  [TimeoutConfig](#timeoutconfig) |
-
-
-## HcpStatus
-Status of ConnectionPool.
-```typescript
-const HCPStatus = {
-  IDLE: 'IDLE',
-  BUSY: 'BUSY'
-} as const;
-
-type HcpStatus = typeof HCPStatus[keyof typeof HCPStatus];
-```
-
-* IDLE : There is not a request in progress. 
-* BUSY : There is a request in progress.
-
+| ignoreStatusCodes | optional | <code>number[]</code> | The status codes, to ignore reject. Even if a result is received with the status code contained here, it is processed as **resolved**. Not rejected. |
 
 
 ## HTTPMethod
@@ -102,6 +88,7 @@ interface HcpRequestConfig {
   body?: HcpRequestBody;
   retry?: number | RetryConfig;
   timeout?: number | TimeoutConfig;
+  ignoreStatusCodes?: number[];
 }
 ```
 | property | required | type | description |
@@ -112,6 +99,7 @@ interface HcpRequestConfig {
 | body | optional | <code>[HcpRequestBody](#hcprequestbody)</code> | Request body |
 | retry | optional | <code>number \| [RetryConfig](#retryconfig)</code> | The number of retries. See more [RetryConfig](#retryconfig) |
 | timeout | optional | <code>[ms](#ms) \| [TimeoutConfig](#timeoutconfig)</code> | The timeout(ms) for the request. See more  [TimeoutConfig](#timeoutconfig) |
+| ignoreStatusCodes | optional | <code>number[]</code> | The status codes, to ignore reject. |
 
 ## UrlInfo 
 ```typescript
@@ -128,7 +116,7 @@ interface UrlInfo {
 
 
 ## RequestConfig
-The interface used internally. Used to create a [HcpHttpClient](/src/core/hcpHttpClient.ts)
+Internal interface.
 ```typescript
 interface RequestConfig {    
     url: URL;    

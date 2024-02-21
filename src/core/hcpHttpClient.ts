@@ -39,6 +39,7 @@ export interface RequestConfig {
   timeout?: TimeoutConfig;
   requestHeaders?: HcpRequestHeaders;
   requestBody?: HcpRequestBody;    
+  ignoreStatusCodes?: number[];
 }
 
 /**
@@ -103,6 +104,9 @@ export default class HcpHttpClient extends HttpClient {
    * User Custom HTTP Headers
    */
   headers?: HcpRequestHeaders;
+
+  ignoreStatusCodes?: number[];
+
   /**
    * User Custom HTTP Body
    * 
@@ -146,6 +150,7 @@ export default class HcpHttpClient extends HttpClient {
     this.body = config.requestBody;
     this.transport = this.isHttps ? https : http;    
     this.agent = this.isHttps ? (config.httpsAgent ?? new https.Agent({keepAlive: true})) : (config.httpAgent ?? new http.Agent({keepAlive: true}));
+    this.ignoreStatusCodes = config.ignoreStatusCodes;
   }
 
   /**
@@ -161,8 +166,8 @@ export default class HcpHttpClient extends HttpClient {
         agent: this.agent,
         headers: this.headers
       }, (res) => {        
-        if (res?.statusCode && res.statusCode >= 400) {
-          reject(new HcpError(`${res.statusMessage} with status code ${res.statusCode}`, HcpErrorCode.BAD_RESPONSE, { config: this.config, req, res, retryCount: this.retryCount }));
+        if (!this.#validateStatusCode(res.statusCode)) {
+          reject(new HcpError(`${res.statusMessage} with status code ${res.statusCode}`, HcpErrorCode.BAD_RESPONSE, { config: this.config, req, res, retryCount: this.retryCount }));                  
         } else {
           let body = '';
 
@@ -266,5 +271,19 @@ export default class HcpHttpClient extends HttpClient {
 
       reject(lastError);
     })
+  }
+
+  #validateStatusCode(statusCode?: number) {
+    if (typeof statusCode === "undefined") {
+      return true;
+    } else {
+      if (this.ignoreStatusCodes?.includes(statusCode)) {
+        return true;
+      }
+      if (statusCode < 400) {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -1,7 +1,7 @@
 # http-connection-pool
 | [npm](https://www.npmjs.com/package/http-connection-pool) | 
 
-**http-connection-pool** quickly performs many HTTP requests in concurrently that cannot be processed at once. Like a **thread-pool**.
+**http-connection-pool** quickly performs many HTTP requests in concurrently that cannot be processed at once.
 
 
 ## Table of contents
@@ -14,8 +14,7 @@
 * [Use External HTTP Library](#use-external-http-library)
   * [axios](#axios)
   * [node-fetch](#node-fetch)
-* [Compare](#compare)
-
+  
 ## Docs
 * [Getting Started](./docs/1-GettingStarted.md)
 * [API](./docs/2-API.md)
@@ -105,31 +104,4 @@ for (let i = 0; i <= 100_000; i++) {
     .then(d => d.text())
     .then(d => console.log(d, i));
 }
-```
-
-
-## Compare
-Compare the execution times of the three methods.
-1. Serial Request
-2. Batch Request(batch size 100)
-3. ConnectionPool (size 100)
-
-Send 10,000 HTTP requests to a test server that transmits results after a random delay time.
-[./example/compare.ts](./example/compare.ts)
-```javascript
-get('/test', (req, res) => {
-  setTimeout(() => {
-    res.send("OK")
-  }, Math.random() * 100);
-});
-```
-```bash
-test 1 serial request
-test 1 : 517066ms
----------------------------------
-test 2 batch request
-test 2 : 10770ms
----------------------------------
-test 3 connection pool
-test 3 : 5180ms
 ```
