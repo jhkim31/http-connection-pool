@@ -1,7 +1,7 @@
 # http-connection-pool
 | [npm](https://www.npmjs.com/package/http-connection-pool) | 
 
-**http-connection-pool** quickly performs many HTTP requests in concurrently that cannot be processed at once. Like a **thread-pool**.
+**http-connection-pool** quickly performs many HTTP requests in concurrently that cannot be processed at once.
 
 
 ## Table of contents
